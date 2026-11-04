@@ -29,8 +29,8 @@
 html, body { margin: 0; }
 body {
   background: var(--bg); color: var(--ink);
-  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  padding-bottom: 140px;
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding-bottom: 140px; letter-spacing: .01em; word-spacing: .04em;
 }
 header { padding-block: 18px 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 680px; margin: 0 auto; }
 header h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
@@ -50,7 +50,7 @@ nav button.on { color: var(--accent); font-weight: 600; }
 .card h2 { margin: 0 0 6px; font-size: 1.1rem; }
 .card h3 { margin: 0; font-size: 1rem; }
 .muted { color: var(--muted); }
-.small { font-size: .88rem; }
+.small { font-size: .94rem; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .spread { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; background: var(--soft); color: var(--accent); font-size: .8rem; font-weight: 600; }
@@ -110,7 +110,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 #flow .inner { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; text-align: center; }
 #flow h2 { margin: 0; font-size: 1.6rem; text-wrap: balance; }
-#flow .sk { color: var(--muted); font-style: italic; font-size: .9rem; margin-top: -10px; }
+#flow .sk { color: var(--muted); font-size: .95rem; margin-top: -10px; }
 .breath { width: 130px; height: 130px; margin: 6px auto; border-radius: 50%; background: var(--soft); border: 3px solid var(--accent);
   display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em;
   transform: scale(.75); transition-property: transform; transition-timing-function: ease-in-out; }
@@ -119,13 +119,19 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .fbar i { display: block; height: 100%; background: var(--accent); }
 .pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 @media (prefers-reduced-motion: reduce) { .breath { transition: none !important; } }
+.info { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--card); color: var(--accent);
+  font: 700 1rem/1 Georgia, "Times New Roman", serif; cursor: pointer; }
+.info[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); }
+.tips { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--soft); font-size: .94rem; }
+.tips ul, .tips ol { margin: 4px 0; padding-left: 20px; }
+.tips li { margin: 4px 0; }
+.lvl { font-weight: 600; }
 .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 </style>
 </head>
 <body>
 <header>
   <h1>Steady Strength</h1>
-  <p id="subtitle">Rings, one weight, a mat and a rope. Slow and steady.</p>
   <p id="sync" class="small"></p>
 </header>
 <main id="app"></main>
@@ -136,13 +142,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
   <div class="breath" id="fBreath"></div>
   <h2 id="fName"></h2>
   <div class="sk" id="fSk"></div>
-  <p id="fCue" style="margin:0"></p>
+  <div class="row" style="justify-content:center"><button class="info" id="fInfo" aria-expanded="false" aria-label="Show tips">i</button></div>
+  <p id="fCue" style="margin:0" hidden></p>
   <div class="row" style="justify-content:center">
     <button class="btn" id="fPrev">Back</button><button class="btn primary" id="fPlay">Pause</button><button class="btn" id="fNext">Next</button>
   </div>
   <div class="row small" style="justify-content:center"><span class="muted">Pace</span><button class="btn tiny" id="fSlow">Slower</button><b id="fPace"></b><button class="btn tiny" id="fFast">Faster</button></div>
   <button class="btn" id="fClose">Finish</button>
-  <div class="muted small">Your sets are counted automatically. Pinch or sharp pain in the shoulder: rest in child's pose.</div>
+  <div class="muted small">Shoulder pinch? Rest in child's pose.</div>
 </div></div>
 <div id="ask" hidden><div class="card"><p id="askMsg" style="margin-top:0"></p><div class="row" style="justify-content:flex-end"><button class="btn" id="askNo">Cancel</button><button class="btn primary" id="askYes">Yes</button></div></div></div>
 
@@ -281,14 +288,14 @@ const COOLDOWN = [
   "Open book on your side, 5 each side"
 ];
 const DESK = [
-  ["Chin tucks", "10 reps. Slide your head straight back, make a double chin, hold 2s."],
-  ["Shoulder rolls", "10 slow rolls backwards."],
-  ["Shoulder blade squeeze", "10 reps, hold 3s. Down and back, not up."],
-  ["Shrug and drop", "5 reps. Shrug hard for 3s, then let go completely."],
-  ["Upper trap / neck stretch", "30s each side. Ear toward shoulder, opposite hand reaches down."],
-  ["Doorway chest stretch", "30s. Forearms on the door frame, lean gently through."],
-  ["Seated back extension", "5 reps. Hands behind head, lean back over the chair top."],
-  ["Stand and reach tall", "5 slow breaths, arms overhead."]
+  ["Chin tucks", "10×", "Slide your head straight back to make a double chin. Hold 2 seconds."],
+  ["Shoulder rolls", "10×", "Slow rolls, backwards."],
+  ["Shoulder squeeze", "10×", "Squeeze shoulder blades down and back. Hold 3 seconds."],
+  ["Shrug and drop", "5×", "Shrug hard for 3 seconds, then let go completely."],
+  ["Neck stretch", "30s each side", "Ear toward shoulder. Opposite hand reaches down."],
+  ["Doorway stretch", "30s", "Forearms on the door frame. Lean gently through."],
+  ["Back bend in chair", "5×", "Hands behind head. Lean back over the top of the chair."],
+  ["Stand and reach", "5 breaths", "Stand up, arms overhead, reach tall."]
 ];
 
 // ---------- Storage ----------
@@ -406,6 +413,11 @@ function getDraft() {
   return S.draft;
 }
 
+// ---------- Info (ⓘ) toggles ----------
+const OPEN = new Set();
+const infoBtn = key => `<button class="info" data-info="${key}" aria-expanded="${OPEN.has(key)}" aria-label="Show tips">i</button>`;
+const tips = (key, html) => `<div class="tips" id="tip-${key}" ${OPEN.has(key) ? "" : "hidden"}>${html}</div>`;
+
 // ---------- Views ----------
 let tab = "today";
 function render() {
@@ -422,43 +434,44 @@ function viewToday() {
   const last = lastStrength(), flow = d.type === "C";
   let restNote = "";
   if (flow) restNote = "";
-  else if (last && last.date === todayStr()) restNote = `<div class="note">You already logged a workout today. Nice. Tomorrow is a rest day; a desk break is plenty.</div>`;
-  else if (last && dayDiff(last.date, todayStr()) === 1) restNote = `<div class="note warn">You trained yesterday. A rest day between workouts helps your body adapt. Today, consider just the desk break routine and a walk.</div>`;
-  else if (last && dayDiff(last.date, todayStr()) > 6) restNote = `<div class="note">It's been a while. No problem. Start where you left off and go easy today.</div>`;
+  else if (last && last.date === todayStr()) restNote = `<div class="note">Done for today. Rest tomorrow.</div>`;
+  else if (last && dayDiff(last.date, todayStr()) === 1) restNote = `<div class="note warn">You trained yesterday. Rest today: desk break, walk, or Flow.</div>`;
+  else if (last && dayDiff(last.date, todayStr()) > 6) restNote = `<div class="note">Welcome back. Go easy today.</div>`;
 
   const exHtml = w.list.map(id => exerciseCard(id, d)).join("");
   return `
     ${restNote}
     <div class="card">
       <div class="spread">
-        <div><h2>${w.name}</h2><div class="muted small">${w.focus} · week ${weekNumber()} · ${w.mins || "~30 min"}</div></div>
+        <div><h2>${w.name}</h2><div class="muted small">Week ${weekNumber()} · ${w.mins || "30 min"}</div></div>
+        ${infoBtn("w-" + d.type)}
       </div>
       <div class="pick">${Object.keys(WORKOUTS).map(k => `<button class="btn tiny ${k === d.type ? "on" : ""}" data-pick="${k}">${WORKOUTS[k].short}</button>`).join("")}</div>
-      <div class="note small">${flow
-        ? "Move slowly with your breath. One set = 24 poses (12 leading right, 12 leading left). Use guided mode below; rest a few breaths between sets."
-        : "Rest 60–90s between sets (use the timer below). Effort should feel like you could do 2–3 more reps. Sharp or pinching shoulder pain means stop that exercise."}</div>
+      ${tips("w-" + d.type, flow
+        ? "<ul><li>Move slowly with your breath.</li><li>1 set = 24 poses: 12 leading right, 12 leading left.</li><li>Rest a few breaths between sets.</li></ul>"
+        : "<ul><li>Rest 60–90 seconds between sets. Use the timer.</li><li>Stop each set when you could still do 2–3 more.</li><li>Sharp or pinching shoulder pain: stop that exercise.</li></ul>")}
     </div>
-    ${checklistCard(flow ? "Warm-up (2 min)" : "Warm-up (5 min)", flow ? FLOW_WARM : WARMUP, "warm", d)}
+    ${checklistCard(flow ? "Warm-up · 2 min" : "Warm-up · 5 min", flow ? FLOW_WARM : WARMUP, "warm", d)}
     ${exHtml}
-    ${checklistCard(flow ? "Cool-down (3 min)" : "Cool-down (3 min)", flow ? FLOW_COOL : COOLDOWN, "cool", d)}
+    ${checklistCard("Cool-down · 3 min", flow ? FLOW_COOL : COOLDOWN, "cool", d)}
     <div class="card">
-      <h3>How did it go?</h3>
+      <div class="spread"><h3>How did it go?</h3>${infoBtn("feel")}</div>
       <div class="feel" style="margin-top:8px">
         ${["easy", "good", "hard"].map(f => `<button class="btn ${d.feel === f ? "on" : ""}" data-feel="${f}">${f[0].toUpperCase() + f.slice(1)}</button>`).join("")}
       </div>
       <div style="margin-top:14px">
-        <div class="spread"><label for="pain">Shoulder / neck discomfort</label><b id="painVal">${d.pain}/10</b></div>
+        <div class="spread"><label for="pain">Shoulder pain</label><b id="painVal">${d.pain}/10</b></div>
         <input type="range" id="pain" min="0" max="10" value="${d.pain}">
-        <div class="muted small">0 = none. Above 3, or if it's worse tomorrow, go back a level on pushing and face pulls.</div>
       </div>
-      <div style="margin-top:12px"><label for="notes" class="small muted">Notes</label><textarea id="notes" placeholder="Sleep, energy, anything that felt off...">${esc(d.notes)}</textarea></div>
+      ${tips("feel", "0 = no pain. Above 3, or worse the next day? Go down a level on push-ups, face pulls and cobra.")}
+      <div style="margin-top:12px"><label for="notes" class="small muted">Notes</label><textarea id="notes" placeholder="Optional">${esc(d.notes)}</textarea></div>
     </div>
     <button class="btn primary big" data-act="finish">${flow ? "Save flow" : "Save workout"}</button>
   `;
 }
 
 function checklistCard(title, items, key, d) {
-  return `<div class="card"><details ${d[key].length < items.length ? "" : ""}>
+  return `<div class="card"><details>
     <summary style="margin:0;font-size:1rem;color:var(--ink);font-weight:600">${title} <span class="muted small">${d[key].length}/${items.length}</span></summary>
     <div style="margin-top:6px">${items.map((t, i) => `<label class="check ${d[key].includes(i) ? "done" : ""}"><input type="checkbox" data-list="${key}" data-i="${i}" ${d[key].includes(i) ? "checked" : ""}><span class="t">${esc(t)}</span></label>`).join("")}</div>
   </details></div>`;
@@ -468,30 +481,33 @@ function exerciseCard(id, d) {
   const e = EX[id], en = d.entries[id], L = en.level;
   const [lo, hi] = e.targets ? [e.targets[L], e.targets[L]] : e.range;
   const prev = lastEntry(id);
-  const prevTxt = prev ? `Last time (${fmtDate(prev.s.date)}): ${prev.en.sets.map(x => (x.reps || "–") + (x.weight ? "@" + x.weight : "")).join(", ")}${prev.en.level !== L ? " at a different level" : ""}` : "First time. Find a comfortable starting point.";
   const up = readyToLevelUp(id) && L === lvl(id);
-  const target = e.single ? `Target: ${lo} ${e.unit === "sets" ? "sets of 24 poses" : "rounds"}` : `${en.sets.length} sets × ${lo === hi ? lo : lo + "–" + hi} ${unitLabel(id)}`;
+  const side = e.perSide ? " each side" : "";
+  const target = e.single ? (e.unit === "sets" ? `${lo} sets` : `${lo} rounds`) : `${en.sets.length} × ${lo === hi ? lo : lo + "–" + hi} ${e.unit === "secs" ? "sec" : "reps"}${side}`;
   const rows = en.sets.map((s, i) => `
     <span class="small muted">${e.single ? "Done" : "Set " + (i + 1)}</span>
-    <input type="number" inputmode="numeric" min="0" placeholder="${e.unit}" data-ex="${id}" data-i="${i}" data-f="reps" value="${esc(s.reps)}">
-    ${e.weight ? `<input type="number" inputmode="decimal" min="0" placeholder="weight (lb)" data-ex="${id}" data-i="${i}" data-f="weight" value="${esc(s.weight)}">` : ""}
+    <input type="number" inputmode="numeric" min="0" placeholder="${e.single ? e.unit : prev && prev.en.sets[i] ? prev.en.sets[i].reps : e.unit}" data-ex="${id}" data-i="${i}" data-f="reps" value="${esc(s.reps)}" aria-label="${e.name} set ${i + 1}">
+    ${e.weight ? `<input type="number" inputmode="decimal" min="0" placeholder="lb" data-ex="${id}" data-i="${i}" data-f="weight" value="${esc(s.weight)}" aria-label="${e.name} set ${i + 1} weight">` : ""}
   `).join("");
+  const tipHtml = `<ul>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+      ${id === "sunsal" ? `<b>The 12 poses</b>, then repeat on the other leg:<ol>${sunPoses(L).slice(0, 12).map(p => `<li>${esc(p.n)} <span class="muted">· ${p.b}</span></li>`).join("")}</ol>` : ""}
+      ${prev ? `<div class="muted">Last time (${fmtDate(prev.s.date)}): ${prev.en.sets.map(x => (x.reps || "–") + (x.weight ? " @ " + x.weight + " lb" : "")).join(", ")}</div>` : ""}
+      ${e.single ? "" : `<div class="row" style="margin-top:8px"><button class="btn tiny" data-addset="${id}">Add a set</button>${en.sets.length > 1 ? `<button class="btn tiny" data-rmset="${id}">Remove a set</button>` : ""}</div>`}`;
   return `<div class="card">
     <div class="spread">
-      <div><h3>${e.name}</h3><div class="small">Level ${L + 1}: <b>${esc(e.levels[L])}</b></div></div>
-      <div class="row" style="flex-wrap:nowrap">
-        <button class="btn tiny" data-lvl="${id}" data-d="-1" ${L === 0 ? "disabled" : ""} aria-label="Easier">−</button>
-        <button class="btn tiny" data-lvl="${id}" data-d="1" ${L >= e.levels.length - 1 ? "disabled" : ""} aria-label="Harder">+</button>
-      </div>
+      <div style="min-width:0"><h3>${e.name}</h3><div class="small lvl">${esc(e.levels[L])}</div></div>
+      ${infoBtn("ex-" + id)}
     </div>
-    <div class="row small" style="margin-top:6px"><span class="pill">${target}</span>${up ? `<span class="pill" style="background:var(--accent);color:var(--accent-ink)">Ready to level up? Tap +</span>` : ""}</div>
-    <div class="muted small" style="margin-top:6px">${esc(prevTxt)}</div>
-    <details><summary>How to do it</summary><div class="small muted">${esc(e.why)}</div><ul class="small">${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
-      ${id === "sunsal" ? `<div class="small"><b>The 12 poses</b> (then repeat leading with the other leg):</div><ol class="small">${sunPoses(L).slice(0, 12).map(p => `<li>${esc(p.n)} <span class="muted">· ${esc(p.sk)} · ${p.b}</span></li>`).join("")}</ol>` : ""}
-      <div class="small muted">All levels: ${e.levels.map((x, i) => (i + 1) + ". " + esc(x)).join(" · ")}</div></details>
+    <div class="row" style="margin-top:8px">
+      <span class="pill">${target}</span>
+      ${up ? `<span class="pill" style="background:var(--accent);color:var(--accent-ink)">Level up ↑</span>` : ""}
+      <span style="flex:1"></span>
+      <button class="btn tiny" data-lvl="${id}" data-d="-1" ${L === 0 ? "disabled" : ""} aria-label="Easier version">Easier</button>
+      <button class="btn tiny" data-lvl="${id}" data-d="1" ${L >= e.levels.length - 1 ? "disabled" : ""} aria-label="Harder version">Harder</button>
+    </div>
+    ${tips("ex-" + id, tipHtml)}
     ${id === "sunsal" ? `<button class="btn primary" style="width:100%;margin-top:10px" data-act="guide">Start guided flow</button>` : ""}
     <div class="sets ${e.weight ? "" : "noweight"}">${rows}</div>
-    ${e.single ? "" : `<div class="row" style="margin-top:8px"><button class="btn tiny" data-addset="${id}">+ set</button>${en.sets.length > 1 ? `<button class="btn tiny" data-rmset="${id}">− set</button>` : ""}</div>`}
   </div>`;
 }
 
@@ -500,23 +516,26 @@ function viewDesk() {
   const done = S.deskChecks && S.deskChecks.date === t ? S.deskChecks.items : [];
   return `
     <div class="card">
-      <h2>Desk break · 4 minutes</h2>
-      <div class="muted small">Do this every 1–2 hours you sit, on any day, including rest days. It's the best thing here for those shoulder cramps.</div>
-      <div class="row" style="margin-top:10px"><span class="pill">${n} today</span><span class="muted small">Aim for 3 a day</span></div>
+      <div class="spread"><div><h2>Desk break</h2><div class="muted small">4 min · ${n} today · aim for 3</div></div>${infoBtn("desk")}</div>
+      ${tips("desk", "Do this every 1–2 hours you sit, any day. It's the best thing here for shoulder cramps.")}
     </div>
     <div class="card">
-      ${DESK.map(([name, how], i) => `<label class="check ${done.includes(i) ? "done" : ""}"><input type="checkbox" data-desk="${i}" ${done.includes(i) ? "checked" : ""}><span><span class="t"><b>${name}</b></span><br><span class="small muted">${how}</span></span></label>`).join("")}
+      ${DESK.map(([name, dose, how], i) => `<div class="check ${done.includes(i) ? "done" : ""}" style="align-items:center">
+        <input type="checkbox" id="desk${i}" data-desk="${i}" ${done.includes(i) ? "checked" : ""}>
+        <label for="desk${i}" style="flex:1;min-width:0"><span class="t"><b>${name}</b></span> <span class="muted">· ${dose}</span></label>
+        ${infoBtn("d" + i)}
+      </div>${tips("d" + i, how)}`).join("")}
     </div>
     <button class="btn primary big" data-act="desk">Log a desk break</button>
     <div class="card">
-      <h3>If a shoulder cramp starts</h3>
+      <details><summary style="margin:0;font-size:1rem;color:var(--ink);font-weight:600">Shoulder cramp? What to do</summary>
       <ul class="small">
-        <li>Stop what you're doing and drop your shoulders. Slow breaths out through the mouth.</li>
-        <li>Gentle heat (warm shower or heat pack) for 10–15 minutes.</li>
-        <li>Very light stretch of the cramping muscle only to mild tension. No forcing.</li>
-        <li>Skip upper-body training that day; legs and walking are fine.</li>
-        <li>See a doctor or physio if cramps are frequent, wake you up, or come with numbness, tingling or weakness in the arm.</li>
-      </ul>
+        <li>Drop your shoulders. Breathe out slowly.</li>
+        <li>Heat for 10–15 minutes.</li>
+        <li>Light stretch only. No forcing.</li>
+        <li>Skip upper body today. Legs and walking are fine.</li>
+        <li>Frequent cramps, numbness or tingling? See a doctor or physio.</li>
+      </ul></details>
     </div>`;
 }
 
@@ -640,6 +659,11 @@ function bind() {
     if (!(await ask("Delete this workout?"))) return;
     S.sessions = S.sessions.filter(s => s.id !== b.dataset.del); cloudDelete(b.dataset.del); save(); render();
   }));
+  app.querySelectorAll("[data-info]").forEach(b => b.addEventListener("click", e => {
+    e.preventDefault(); const k = b.dataset.info, el = document.getElementById("tip-" + k);
+    if (OPEN.has(k)) OPEN.delete(k); else OPEN.add(k);
+    b.setAttribute("aria-expanded", OPEN.has(k)); if (el) el.hidden = !OPEN.has(k);
+  }));
   app.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => actions.pick(b.dataset.pick)));
   app.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => actions[b.dataset.act]()));
   const f = $("#importFile"); if (f) f.addEventListener("change", () => {
@@ -728,6 +752,10 @@ $("#fNext").addEventListener("click", () => flowStep(1));
 $("#fPrev").addEventListener("click", () => flowStep(-1));
 $("#fPlay").addEventListener("click", () => { F.playing = !F.playing; flowShow(); });
 $("#fClose").addEventListener("click", flowClose);
+try { F.cue = localStorage.getItem(KEY + "-cue") === "1"; } catch (e) {}
+function cueShow() { $("#fCue").hidden = !F.cue; $("#fInfo").setAttribute("aria-expanded", !!F.cue); }
+cueShow();
+$("#fInfo").addEventListener("click", () => { F.cue = !F.cue; try { localStorage.setItem(KEY + "-cue", F.cue ? "1" : "0"); } catch (e) {} cueShow(); });
 const setPace = v => { F.pace = Math.max(3, Math.min(10, v)); try { localStorage.setItem(KEY + "-pace", F.pace); } catch (e) {} flowShow(); };
 $("#fSlow").addEventListener("click", () => setPace(F.pace + 1));
 $("#fFast").addEventListener("click", () => setPace(F.pace - 1));
