@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1f6f5c">
 <title>Steady Strength</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
 :root {
   --bg: #f6f5f1; --card: #ffffff; --ink: #1d2320; --muted: #66706b; --line: #e3e1da;
@@ -15,23 +16,29 @@
   :root:not([data-theme="light"]) {
     --bg: #121614; --card: #1b201e; --ink: #e8ece9; --muted: #9aa5a0; --line: #2c3330;
     --accent: #5cc3a5; --accent-ink: #0c1a15; --soft: #1e2e29; --warn: #f0a070; --warn-soft: #3a2a20;
-    --good: #7cc87f;
+    --good: #7cc87f; color-scheme: dark;
   }
 }
+:root[data-theme="dark"] {
+    --bg: #121614; --card: #1b201e; --ink: #e8ece9; --muted: #9aa5a0; --line: #2c3330;
+    --accent: #5cc3a5; --accent-ink: #0c1a15; --soft: #1e2e29; --warn: #f0a070; --warn-soft: #3a2a20;
+    --good: #7cc87f; color-scheme: dark;
+}
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
   background: var(--bg); color: var(--ink);
   font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   padding-bottom: 140px;
 }
-header { padding: 18px 16px 6px; max-width: 680px; margin: 0 auto; }
+header { padding-block: 18px 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 680px; margin: 0 auto; }
 header h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
 header p { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
-main { max-width: 680px; margin: 0 auto; padding: 8px 16px; }
+main { max-width: 680px; margin: 0 auto; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 nav {
   position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card);
-  border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 10;
+  border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); z-index: 10;
 }
 nav button {
   flex: 1; border: 0; background: none; color: var(--muted); padding: 10px 4px 12px;
@@ -82,8 +89,8 @@ svg.spark { width: 100%; height: 56px; display: block; }
 .hist { border-bottom: 1px solid var(--line); padding: 8px 0; }
 .hist:last-child { border-bottom: 0; }
 #timer {
-  position: fixed; left: 0; right: 0; bottom: 62px; z-index: 9; display: flex; justify-content: center;
-  pointer-events: none; padding: 0 16px;
+  position: fixed; left: 0; right: 0; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); z-index: 9; display: flex; justify-content: center;
+  pointer-events: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 #timer .box {
   pointer-events: auto; background: var(--ink); color: var(--bg); border-radius: 99px; padding: 6px 8px 6px 14px;
@@ -91,6 +98,13 @@ svg.spark { width: 100%; height: 56px; display: block; }
 }
 #timer .t { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 46px; }
 #timer button { border: 0; border-radius: 99px; padding: 6px 10px; font: inherit; font-size: .82rem; background: rgba(127,127,127,.25); color: inherit; }
+#toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 30;
+  background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 12px; font-weight: 600; max-width: calc(100% - 32px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.2); white-space: pre-line; }
+#ask { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+#ask .card { max-width: 380px; width: 100%; }
+#sync:empty { display: none; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 </style>
 </head>
@@ -98,8 +112,11 @@ svg.spark { width: 100%; height: 56px; display: block; }
 <header>
   <h1>Steady Strength</h1>
   <p id="subtitle">Rings, one weight, a mat and a rope. Slow and steady.</p>
+  <p id="sync" class="small"></p>
 </header>
 <main id="app"></main>
+<div id="toast" hidden></div>
+<div id="ask" hidden><div class="card"><p id="askMsg" style="margin-top:0"></p><div class="row" style="justify-content:flex-end"><button class="btn" id="askNo">Cancel</button><button class="btn primary" id="askYes">Yes</button></div></div></div>
 
 <div id="timer"><div class="box">
   <span class="t" id="tDisplay">0:00</span>
@@ -218,6 +235,55 @@ function load() {
 }
 let S = load();
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// In-page messages (the viewer blocks alert/confirm)
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 4000); }
+function ask(msg) {
+  return new Promise(res => {
+    const box = $("#ask"); $("#askMsg").textContent = msg; box.hidden = false;
+    const done = v => { box.hidden = true; $("#askYes").onclick = $("#askNo").onclick = null; res(v); };
+    $("#askYes").onclick = () => done(true); $("#askNo").onclick = () => done(false);
+  });
+}
+
+// ---------- Cloud save (when opened as a Claude artifact) ----------
+// Each person's data lives in their own private folder: data/users/<id>/ (meta doc + one doc per workout).
+const Cloud = { col: null, metaQ: Promise.resolve() };
+function setSync(msg) { $("#sync").textContent = msg; $("#sync").className = "small" + (msg ? " muted" : ""); }
+function cloudMeta() {
+  if (!Cloud.col) return;
+  const body = { levels: { ...S.levels }, desk: { ...S.desk } };
+  Cloud.metaQ = Cloud.metaQ.then(() => Cloud.col.doc("meta").set(body)).catch(() => setSync("Couldn't save to your account. Kept on this device."));
+}
+function cloudSession(s) { if (Cloud.col) Cloud.col.doc("s_" + s.id).set(JSON.parse(JSON.stringify(s))).catch(() => toast("Couldn't save to your account. Kept on this device.")); }
+function cloudDelete(id) { if (Cloud.col) Cloud.col.doc("s_" + id).delete().catch(() => {}); }
+async function initCloud() {
+  if (!window.claude || !window.claude.use) return;
+  const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+  const uid = user ? await user.id() : null;
+  if (!db || !uid) { setSync("Saving on this device only. Sign in to keep your log across devices."); return; }
+  Cloud.col = db.collection("data/users/" + uid);
+  setSync("Loading your log...");
+  let first = true;
+  const timer = setTimeout(() => setSync("Can't reach your saved log yet. Changes are kept on this device for now."), 10000);
+  Cloud.col.onSnapshot(snap => {
+    if (snap.metadata.fromCache) return;
+    clearTimeout(timer); setSync("");
+    const sessions = []; let meta = null;
+    snap.docs.forEach(d => { if (d.id === "meta") meta = d.data(); else if (d.id.startsWith("s_")) sessions.push(JSON.parse(JSON.stringify(d.data()))); });
+    if (first) {
+      first = false;
+      // First visit with the cloud: move anything logged on this device up.
+      if (!sessions.length && !meta && S.sessions.length) { S.sessions.forEach(cloudSession); cloudMeta(); return; }
+    }
+    S.sessions = sessions.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    if (meta) { S.levels = { ...(meta.levels || {}) }; S.desk = { ...(meta.desk || {}) }; }
+    save();
+    const a = document.activeElement;
+    if (!(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA"))) render();
+  }, () => { clearTimeout(timer); setSync("Saving on this device only."); });
+}
 
 // ---------- Helpers ----------
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -425,7 +491,7 @@ function viewProgress() {
     <div class="card"><h3>Exercises</h3><div class="muted small">Trend combines level and reps, so leveling up shows as progress.</div>${exRows}</div>
     <div class="card"><h3>History</h3>${ss.length ? ss.slice().reverse().map(s => `<div class="hist"><div class="spread"><div><b>${fmtDate(s.date)}</b> · ${WORKOUTS[s.type].name}</div><button class="btn tiny" data-del="${s.id}">Delete</button></div>
       <div class="small muted">Felt ${s.feel || "–"} · shoulder ${s.pain || 0}/10</div>${s.notes ? `<div class="small">${esc(s.notes)}</div>` : ""}</div>`).join("") : `<div class="muted small">No workouts yet. Your first one is waiting on the Workout tab.</div>`}</div>
-    <div class="card"><h3>Your data</h3><div class="muted small">Saved only in this browser. Export a backup now and then.</div>
+    <div class="card"><h3>Your data</h3><div class="muted small">${Cloud.col ? "Saved privately to your account. Only you can see it." : "Saved only in this browser. Export a backup now and then."}</div>
       <div class="row" style="margin-top:8px"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button><button class="btn" data-act="reset">Reset all</button></div>
       <input type="file" id="importFile" accept="application/json" hidden></div>`;
 }
@@ -474,7 +540,7 @@ function bind() {
   }));
   app.querySelectorAll("[data-lvl]").forEach(b => b.addEventListener("click", () => {
     const id = b.dataset.lvl, n = Math.max(0, Math.min(EX[id].levels.length - 1, d.entries[id].level + Number(b.dataset.d)));
-    d.entries[id].level = n; S.levels[id] = n; save(); render();
+    d.entries[id].level = n; S.levels[id] = n; save(); cloudMeta(); render();
   }));
   app.querySelectorAll("[data-addset]").forEach(b => b.addEventListener("click", () => { d.entries[b.dataset.addset].sets.push({ reps: "", weight: "" }); save(); render(); }));
   app.querySelectorAll("[data-rmset]").forEach(b => b.addEventListener("click", () => { d.entries[b.dataset.rmset].sets.pop(); save(); render(); }));
@@ -494,21 +560,21 @@ function bind() {
     if (c.checked) { if (!arr.includes(i)) arr.push(i); } else arr.splice(arr.indexOf(i), 1);
     c.closest(".check").classList.toggle("done", c.checked); save();
   }));
-  app.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => {
-    if (!confirm("Delete this workout?")) return;
-    S.sessions = S.sessions.filter(s => s.id !== b.dataset.del); save(); render();
+  app.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    if (!(await ask("Delete this workout?"))) return;
+    S.sessions = S.sessions.filter(s => s.id !== b.dataset.del); cloudDelete(b.dataset.del); save(); render();
   }));
   app.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => actions[b.dataset.act]()));
   const f = $("#importFile"); if (f) f.addEventListener("change", () => {
     const file = f.files[0]; if (!file) return;
-    file.text().then(txt => { const data = JSON.parse(txt); if (!data.sessions) throw 0; S = data; save(); render(); alert("Backup imported."); }).catch(() => alert("That file doesn't look like a backup."));
+    file.text().then(txt => { const data = JSON.parse(txt); if (!data.sessions) throw 0; S.sessions.forEach(s => cloudDelete(s.id)); S = { desk: {}, levels: {}, ...data }; save(); S.sessions.forEach(cloudSession); cloudMeta(); render(); toast("Backup imported."); }).catch(() => toast("That file doesn't look like a backup."));
   });
 }
 
 const actions = {
-  swap() {
+  async swap() {
     const d = S.draft;
-    if (Object.values(d.entries).some(en => en.sets.some(s => s.reps !== "")) && !confirm("Switch workouts? Numbers entered so far will be cleared.")) return;
+    if (Object.values(d.entries).some(en => en.sets.some(s => s.reps !== "")) && !(await ask("Switch workouts? Numbers entered so far will be cleared."))) return;
     S.draft = freshDraft(d.type === "A" ? "B" : "A"); save(); render();
   },
   finish() {
@@ -518,23 +584,29 @@ const actions = {
       const sets = en.sets.filter(s => s.reps !== "");
       if (sets.length) entries[id] = { level: en.level, sets };
     });
-    if (!Object.keys(entries).length) { alert("Enter at least one set before saving."); return; }
-    S.sessions.push({ id: Date.now().toString(36), date: d.date, type: d.type, entries, feel: d.feel, pain: d.pain, notes: d.notes });
+    if (!Object.keys(entries).length) { toast("Enter at least one set before saving."); return; }
+    const sess = { id: Date.now().toString(36), date: d.date, type: d.type, entries, feel: d.feel, pain: d.pain, notes: d.notes };
+    S.sessions.push(sess); cloudSession(sess); cloudMeta();
     S.sessions.sort((a, b) => a.date.localeCompare(b.date));
     S.draft = null; save();
     tab = "progress"; render(); window.scrollTo(0, 0);
     const ups = Object.keys(entries).filter(readyToLevelUp).map(id => EX[id].name);
-    setTimeout(() => alert("Workout saved. Rest tomorrow." + (ups.length ? "\n\nReady to level up next time: " + ups.join(", ") + "." : "")), 50);
+    toast("Workout saved. Rest tomorrow." + (ups.length ? "\nReady to level up: " + ups.join(", ") + "." : ""));
   },
   desk() {
-    const t = todayStr(); S.desk[t] = (S.desk[t] || 0) + 1; S.deskChecks = { date: t, items: [] }; save(); render();
+    const t = todayStr(); S.desk[t] = (S.desk[t] || 0) + 1; S.deskChecks = { date: t, items: [] }; save(); cloudMeta(); render(); toast("Desk break logged.");
   },
-  export() {
-    const blob = new Blob([JSON.stringify(S, null, 2)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "steady-strength-" + todayStr() + ".json"; a.click();
+  async export() {
+    const json = JSON.stringify({ sessions: S.sessions, levels: S.levels, desk: S.desk }, null, 2), filename = "steady-strength-" + todayStr() + ".json";
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl) { try { await dl.save({ filename, data: json }); } catch (e) {} return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([json], { type: "application/json" })); a.download = filename; a.click();
   },
   import() { $("#importFile").click(); },
-  reset() { if (confirm("Delete ALL workouts and settings? Export a backup first if unsure.")) { S = { sessions: [], levels: {}, desk: {}, draft: null }; save(); render(); } }
+  async reset() {
+    if (!(await ask("Delete ALL workouts and settings? Export a backup first if unsure."))) return;
+    S.sessions.forEach(s => cloudDelete(s.id)); S = { sessions: [], levels: {}, desk: {}, draft: null }; save(); cloudMeta(); render();
+  }
 };
 
 document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => { tab = b.dataset.tab; render(); window.scrollTo(0, 0); }));
@@ -560,6 +632,7 @@ document.querySelectorAll("#timer [data-t]").forEach(b => b.addEventListener("cl
 $("#tStop").addEventListener("click", () => { clearInterval(tInt); tInt = null; $("#tDisplay").textContent = "0:00"; });
 
 render();
+initCloud();
 </script>
 </body>
 </html>
