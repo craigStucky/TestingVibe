@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f6f5c">
+<title>Steady Strength</title>
+<style>
+:root {
+  --bg: #f6f5f1; --card: #ffffff; --ink: #1d2320; --muted: #66706b; --line: #e3e1da;
+  --accent: #1f6f5c; --accent-ink: #ffffff; --soft: #e6f1ed; --warn: #b5541c; --warn-soft: #fbeee5;
+  --good: #2e7d32;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121614; --card: #1b201e; --ink: #e8ece9; --muted: #9aa5a0; --line: #2c3330;
+    --accent: #5cc3a5; --accent-ink: #0c1a15; --soft: #1e2e29; --warn: #f0a070; --warn-soft: #3a2a20;
+    --good: #7cc87f;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding-bottom: 140px;
+}
+header { padding: 18px 16px 6px; max-width: 680px; margin: 0 auto; }
+header h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
+header p { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
+main { max-width: 680px; margin: 0 auto; padding: 8px 16px; }
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card);
+  border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 10;
+}
+nav button {
+  flex: 1; border: 0; background: none; color: var(--muted); padding: 10px 4px 12px;
+  font: inherit; font-size: .8rem; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+nav button span { font-size: 1.25rem; line-height: 1; }
+nav button.on { color: var(--accent); font-weight: 600; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 12px 0; }
+.card h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.card h3 { margin: 0; font-size: 1rem; }
+.muted { color: var(--muted); }
+.small { font-size: .88rem; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spread { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.pill { display: inline-block; padding: 2px 9px; border-radius: 99px; background: var(--soft); color: var(--accent); font-size: .8rem; font-weight: 600; }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.note { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: .92rem; margin: 10px 0; }
+.note.warn { background: var(--warn-soft); }
+button.btn {
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 10px;
+  padding: 9px 14px; font: inherit; font-size: .95rem; cursor: pointer;
+}
+button.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button.btn.big { width: 100%; padding: 14px; font-size: 1.05rem; }
+button.btn.tiny { padding: 4px 10px; font-size: .82rem; }
+button.btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+details summary { cursor: pointer; color: var(--accent); font-size: .9rem; margin-top: 6px; }
+details ul, .card ul { margin: 6px 0; padding-left: 20px; }
+details li { margin: 2px 0; }
+.sets { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px 8px; align-items: center; margin-top: 10px; }
+.sets.noweight { grid-template-columns: auto 1fr; }
+.sets label { font-size: .78rem; color: var(--muted); }
+input[type=number], textarea, input[type=text] {
+  width: 100%; font: inherit; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink);
+}
+textarea { min-height: 70px; resize: vertical; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.check { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.check:last-child { border-bottom: 0; }
+.check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+.check.done .t { text-decoration: line-through; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+.stat b { display: block; font-size: 1.4rem; }
+.stat span { font-size: .78rem; color: var(--muted); }
+svg.spark { width: 100%; height: 56px; display: block; }
+.hist { border-bottom: 1px solid var(--line); padding: 8px 0; }
+.hist:last-child { border-bottom: 0; }
+#timer {
+  position: fixed; left: 0; right: 0; bottom: 62px; z-index: 9; display: flex; justify-content: center;
+  pointer-events: none; padding: 0 16px;
+}
+#timer .box {
+  pointer-events: auto; background: var(--ink); color: var(--bg); border-radius: 99px; padding: 6px 8px 6px 14px;
+  display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.2); max-width: 100%; flex-wrap: wrap;
+}
+#timer .t { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 46px; }
+#timer button { border: 0; border-radius: 99px; padding: 6px 10px; font: inherit; font-size: .82rem; background: rgba(127,127,127,.25); color: inherit; }
+.feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Steady Strength</h1>
+  <p id="subtitle">Rings, one weight, a mat and a rope. Slow and steady.</p>
+</header>
+<main id="app"></main>
+
+<div id="timer"><div class="box">
+  <span class="t" id="tDisplay">0:00</span>
+  <button data-t="30">30s</button><button data-t="60">60s</button><button data-t="90">90s</button>
+  <button id="tStop">Stop</button>
+</div></div>
+
+<nav>
+  <button data-tab="today"><span>●</span>Workout</button>
+  <button data-tab="desk"><span>◐</span>Desk break</button>
+  <button data-tab="progress"><span>▲</span>Progress</button>
+  <button data-tab="plan"><span>☰</span>Plan</button>
+</nav>
+
+<script>
+// ---------- Program ----------
+const EX = {
+  ringrow: {
+    name: "Ring row", unit: "reps", range: [6, 12], why: "Strengthens the upper back that desk work weakens.",
+    cues: ["Squeeze shoulder blades back and down before you bend your arms", "Body in a straight line, ribs down", "Pull rings to your lower ribs, 2 seconds on the way down", "Shoulders stay away from your ears"],
+    levels: ["Steep (almost standing upright)", "Medium (body about 45°)", "Low (body near flat, knees bent)", "Low, legs straight", "Feet raised on a chair"]
+  },
+  squat: {
+    name: "Squat", unit: "reps", range: [8, 12], weight: true, why: "Legs and hips, which sitting makes stiff.",
+    cues: ["Feet shoulder-width, toes slightly out", "Sit down and back, knees follow toes", "Chest tall, weight held at your chest", "Stand up by pushing the floor away"],
+    levels: ["Bodyweight squat to a chair", "Goblet squat to a chair", "Goblet squat, full depth", "Goblet squat, 3-second lower", "Goblet squat with a pause at the bottom"]
+  },
+  pushup: {
+    name: "Push-up", unit: "reps", range: [5, 12], why: "Chest and arms, kept gentle on the shoulder.",
+    cues: ["Hands under shoulders, elbows about 45° from your body (not flared)", "Body in one line", "At the top, push the floor away so shoulder blades spread", "Stop if you feel a pinch at the front of the shoulder"],
+    levels: ["Wall push-up", "Kitchen counter push-up", "Low incline (sturdy chair or step)", "Floor push-up", "Floor push-up, 3-second lower"]
+  },
+  bridge: {
+    name: "Glute bridge", unit: "reps", range: [10, 15], why: "Wakes up hips that switch off from sitting.",
+    cues: ["Lie on back, feet flat near your hips", "Press through heels, squeeze glutes, lift hips", "Don't arch your lower back; ribs stay down"],
+    levels: ["Two legs", "Two legs, 3-second hold at top", "Two legs, weight on hips", "Single leg"]
+  },
+  deadbug: {
+    name: "Dead bug", unit: "reps", range: [5, 10], perSide: true, why: "Core control that protects the lower back.",
+    cues: ["Lie on back, arms up, knees over hips", "Press lower back gently into the mat the whole time", "Slowly lower opposite arm and leg, breathe out"],
+    levels: ["Legs only (arms stay up)", "Opposite arm + bent leg", "Opposite arm + straighter leg", "Holding the weight in both hands"]
+  },
+  row1: {
+    name: "One-arm row", unit: "reps", range: [8, 12], weight: true, perSide: true, why: "More upper-back work, one side at a time.",
+    cues: ["Hand and knee on a chair or bench, back flat", "Pull elbow toward your hip, not your ear", "Don't shrug; neck stays relaxed"],
+    levels: ["Supported row", "Supported row, 2-second squeeze at top", "Supported row, 3-second lower"]
+  },
+  hinge: {
+    name: "Hip hinge", unit: "reps", range: [8, 12], weight: true, why: "Back of the legs and safe lifting pattern.",
+    cues: ["Soft knees, push hips back like closing a car door with your butt", "Back flat, weight close to your legs", "Stand up by squeezing glutes"],
+    levels: ["Hinge to a wall, no weight", "Two-hand weight deadlift (Romanian)", "Single-leg deadlift, hand on wall", "Single-leg deadlift, free"]
+  },
+  facepull: {
+    name: "Ring face pull", unit: "reps", range: [8, 12], why: "Directly trains the muscles that hold shoulders back.",
+    cues: ["Rings at about chest height, lean back slightly", "Pull hands toward your forehead, elbows out at shoulder height", "Finish with thumbs pointing back, squeeze 1 second", "Use a very steep angle; this should feel easy-ish"],
+    levels: ["Very steep (almost standing)", "Steep", "Medium lean"]
+  },
+  split: {
+    name: "Split squat", unit: "reps", range: [6, 10], perSide: true, why: "Balance and single-leg strength.",
+    cues: ["Long stance, back heel up", "Drop straight down, front knee over mid-foot", "Torso tall"],
+    levels: ["Holding a wall or chair", "No support", "Reverse lunge", "Reverse lunge holding the weight"]
+  },
+  yt: {
+    name: "Prone Y-T raise", unit: "reps", range: [6, 10], why: "Lower-trap work that helps stop shoulders hiking up.",
+    cues: ["Face down on the mat, forehead on a towel", "Thumbs up, lift arms by pulling shoulder blades down and back", "Small lift is fine; no neck tension"],
+    levels: ["T raise (arms out to sides)", "Y raise (arms overhead in a Y)", "Alternate Y and T", "Y-T with 2-second hold"]
+  },
+  sideplank: {
+    name: "Side plank", unit: "secs", range: [15, 40], perSide: true, why: "Side core; good for posture.",
+    cues: ["Elbow under shoulder", "Hips up, body straight", "Breathe normally"],
+    levels: ["From knees", "Feet staggered", "Feet stacked"]
+  },
+  rope: {
+    name: "Jump rope finisher", unit: "rounds", single: true, why: "Easy conditioning. Stay light on your feet.",
+    cues: ["Small, quiet hops on the balls of your feet", "Wrists turn the rope, elbows stay close", "No rope? Do the same timing with a light bounce or marching"],
+    levels: ["5 rounds: 20s on / 40s rest", "6 rounds: 30s on / 30s rest", "8 rounds: 30s on / 30s rest", "5 rounds: 60s on / 30s rest", "3 rounds: 2 min on / 1 min rest"],
+    targets: [5, 6, 8, 5, 3]
+  }
+};
+
+const WORKOUTS = {
+  A: { name: "Workout A", focus: "Rows, squats, push-ups, core", list: ["ringrow", "squat", "pushup", "bridge", "deadbug", "rope"] },
+  B: { name: "Workout B", focus: "Back, hips, shoulder health, core", list: ["row1", "hinge", "facepull", "split", "yt", "sideplank", "rope"] }
+};
+
+const WARMUP = [
+  "2 min easy rope skipping or marching in place",
+  "Arm circles, 10 forward + 10 back (small to big)",
+  "Cat-cow on the mat, 8 slow reps",
+  "Wall slides, 8 reps (back to wall, slide arms up and down)",
+  "Shoulder blade squeezes, 10 reps",
+  "Bodyweight squats, 8 reps"
+];
+const COOLDOWN = [
+  "Doorway chest stretch, 30s each side",
+  "Upper trap stretch (ear to shoulder), 30s each side",
+  "Child's pose, 45s, breathe slowly",
+  "Open book on your side, 5 each side"
+];
+const DESK = [
+  ["Chin tucks", "10 reps. Slide your head straight back, make a double chin, hold 2s."],
+  ["Shoulder rolls", "10 slow rolls backwards."],
+  ["Shoulder blade squeeze", "10 reps, hold 3s. Down and back, not up."],
+  ["Shrug and drop", "5 reps. Shrug hard for 3s, then let go completely."],
+  ["Upper trap / neck stretch", "30s each side. Ear toward shoulder, opposite hand reaches down."],
+  ["Doorway chest stretch", "30s. Forearms on the door frame, lean gently through."],
+  ["Seated back extension", "5 reps. Hands behind head, lean back over the chair top."],
+  ["Stand and reach tall", "5 slow breaths, arms overhead."]
+];
+
+// ---------- Storage ----------
+const KEY = "steady-strength-v1";
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.sessions) return s; } catch (e) {}
+  return { sessions: [], levels: {}, desk: {}, draft: null };
+}
+let S = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Helpers ----------
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const todayStr = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const dayDiff = (a, b) => Math.round((new Date(b + "T12:00") - new Date(a + "T12:00")) / 864e5);
+const fmtDate = d => new Date(d + "T12:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+const lvl = id => Math.min(S.levels[id] || 0, EX[id].levels.length - 1);
+const lastSession = () => S.sessions[S.sessions.length - 1];
+const nextType = () => { const l = lastSession(); return l && l.type === "A" ? "B" : "A"; };
+function weekNumber() {
+  if (!S.sessions.length) return 1;
+  return Math.floor(dayDiff(S.sessions[0].date, todayStr()) / 7) + 1;
+}
+function setsFor(id) {
+  if (EX[id].single) return 1;
+  return weekNumber() <= 2 ? 2 : 3;
+}
+function targetRange(id) {
+  const e = EX[id];
+  if (e.targets) { const t = e.targets[lvl(id)]; return [t, t]; }
+  return e.range;
+}
+function unitLabel(id) {
+  const e = EX[id];
+  if (e.unit === "secs") return "seconds" + (e.perSide ? " / side" : "");
+  if (e.unit === "rounds") return "rounds done";
+  return "reps" + (e.perSide ? " / side" : "");
+}
+function lastEntry(id) {
+  for (let i = S.sessions.length - 1; i >= 0; i--) { const en = S.sessions[i].entries[id]; if (en) return { s: S.sessions[i], en }; }
+  return null;
+}
+// Ready to level up: last time at this level, every set hit the top of the range, no "hard", low shoulder discomfort.
+function readyToLevelUp(id) {
+  const l = lastEntry(id); if (!l) return false;
+  if (l.en.level !== lvl(id) || lvl(id) >= EX[id].levels.length - 1) return false;
+  const hi = targetRange(id)[1];
+  const sets = l.en.sets.filter(x => x.reps !== "" && x.reps != null);
+  if (!sets.length || sets.length < (EX[id].single ? 1 : 2)) return false;
+  return sets.every(x => Number(x.reps) >= hi) && l.s.feel !== "hard" && (l.s.pain || 0) <= 2;
+}
+function volume(en) { return en.sets.reduce((a, x) => a + (Number(x.reps) || 0), 0); }
+
+// ---------- Draft (in-progress workout) ----------
+function freshDraft(type) {
+  const entries = {};
+  WORKOUTS[type].list.forEach(id => {
+    entries[id] = { level: lvl(id), sets: Array.from({ length: setsFor(id) }, () => ({ reps: "", weight: "" })) };
+  });
+  return { type, date: todayStr(), entries, feel: "", pain: 0, notes: "", warm: [], cool: [] };
+}
+function getDraft() {
+  if (!S.draft || S.draft.date !== todayStr()) { S.draft = freshDraft(nextType()); save(); }
+  return S.draft;
+}
+
+// ---------- Views ----------
+let tab = "today";
+function render() {
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  $("#timer").style.display = tab === "today" ? "" : "none";
+  const v = { today: viewToday, desk: viewDesk, progress: viewProgress, plan: viewPlan }[tab];
+  $("#app").innerHTML = v();
+  bind();
+}
+
+function viewToday() {
+  const d = getDraft();
+  const w = WORKOUTS[d.type];
+  const last = lastSession();
+  let restNote = "";
+  if (last && last.date === todayStr()) restNote = `<div class="note">You already logged a workout today. Nice. Tomorrow is a rest day; a desk break is plenty.</div>`;
+  else if (last && dayDiff(last.date, todayStr()) === 1) restNote = `<div class="note warn">You trained yesterday. A rest day between workouts helps your body adapt. Today, consider just the desk break routine and a walk.</div>`;
+  else if (last && dayDiff(last.date, todayStr()) > 6) restNote = `<div class="note">It's been a while. No problem. Start where you left off and go easy today.</div>`;
+
+  const exHtml = w.list.map(id => exerciseCard(id, d)).join("");
+  return `
+    ${restNote}
+    <div class="card">
+      <div class="spread">
+        <div><h2>${w.name}</h2><div class="muted small">${w.focus} · week ${weekNumber()} · ~30 min</div></div>
+        <button class="btn tiny" data-act="swap">Switch to ${d.type === "A" ? "B" : "A"}</button>
+      </div>
+      <div class="note small">Rest 60–90s between sets (use the timer below). Effort should feel like you could do 2–3 more reps. Sharp or pinching shoulder pain means stop that exercise.</div>
+    </div>
+    ${checklistCard("Warm-up (5 min)", WARMUP, "warm", d)}
+    ${exHtml}
+    ${checklistCard("Cool-down (3 min)", COOLDOWN, "cool", d)}
+    <div class="card">
+      <h3>How did it go?</h3>
+      <div class="feel" style="margin-top:8px">
+        ${["easy", "good", "hard"].map(f => `<button class="btn ${d.feel === f ? "on" : ""}" data-feel="${f}">${f[0].toUpperCase() + f.slice(1)}</button>`).join("")}
+      </div>
+      <div style="margin-top:14px">
+        <div class="spread"><label for="pain">Shoulder / neck discomfort</label><b id="painVal">${d.pain}/10</b></div>
+        <input type="range" id="pain" min="0" max="10" value="${d.pain}">
+        <div class="muted small">0 = none. Above 3, or if it's worse tomorrow, go back a level on pushing and face pulls.</div>
+      </div>
+      <div style="margin-top:12px"><label for="notes" class="small muted">Notes</label><textarea id="notes" placeholder="Sleep, energy, anything that felt off...">${esc(d.notes)}</textarea></div>
+    </div>
+    <button class="btn primary big" data-act="finish">Save workout</button>
+  `;
+}
+
+function checklistCard(title, items, key, d) {
+  return `<div class="card"><details ${d[key].length < items.length ? "" : ""}>
+    <summary style="margin:0;font-size:1rem;color:var(--ink);font-weight:600">${title} <span class="muted small">${d[key].length}/${items.length}</span></summary>
+    <div style="margin-top:6px">${items.map((t, i) => `<label class="check ${d[key].includes(i) ? "done" : ""}"><input type="checkbox" data-list="${key}" data-i="${i}" ${d[key].includes(i) ? "checked" : ""}><span class="t">${esc(t)}</span></label>`).join("")}</div>
+  </details></div>`;
+}
+
+function exerciseCard(id, d) {
+  const e = EX[id], en = d.entries[id], L = en.level;
+  const [lo, hi] = e.targets ? [e.targets[L], e.targets[L]] : e.range;
+  const prev = lastEntry(id);
+  const prevTxt = prev ? `Last time (${fmtDate(prev.s.date)}): ${prev.en.sets.map(x => (x.reps || "–") + (x.weight ? "@" + x.weight : "")).join(", ")}${prev.en.level !== L ? " at a different level" : ""}` : "First time. Find a comfortable starting point.";
+  const up = readyToLevelUp(id) && L === lvl(id);
+  const target = e.single ? `Target: ${lo} rounds` : `${en.sets.length} sets × ${lo === hi ? lo : lo + "–" + hi} ${unitLabel(id)}`;
+  const rows = en.sets.map((s, i) => `
+    <span class="small muted">${e.single ? "Done" : "Set " + (i + 1)}</span>
+    <input type="number" inputmode="numeric" min="0" placeholder="${e.unit}" data-ex="${id}" data-i="${i}" data-f="reps" value="${esc(s.reps)}">
+    ${e.weight ? `<input type="number" inputmode="decimal" min="0" placeholder="weight (lb)" data-ex="${id}" data-i="${i}" data-f="weight" value="${esc(s.weight)}">` : ""}
+  `).join("");
+  return `<div class="card">
+    <div class="spread">
+      <div><h3>${e.name}</h3><div class="small">Level ${L + 1}: <b>${esc(e.levels[L])}</b></div></div>
+      <div class="row" style="flex-wrap:nowrap">
+        <button class="btn tiny" data-lvl="${id}" data-d="-1" ${L === 0 ? "disabled" : ""} aria-label="Easier">−</button>
+        <button class="btn tiny" data-lvl="${id}" data-d="1" ${L >= e.levels.length - 1 ? "disabled" : ""} aria-label="Harder">+</button>
+      </div>
+    </div>
+    <div class="row small" style="margin-top:6px"><span class="pill">${target}</span>${up ? `<span class="pill" style="background:var(--accent);color:var(--accent-ink)">Ready to level up? Tap +</span>` : ""}</div>
+    <div class="muted small" style="margin-top:6px">${esc(prevTxt)}</div>
+    <details><summary>How to do it</summary><div class="small muted">${esc(e.why)}</div><ul class="small">${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+      <div class="small muted">All levels: ${e.levels.map((x, i) => (i + 1) + ". " + esc(x)).join(" · ")}</div></details>
+    <div class="sets ${e.weight ? "" : "noweight"}">${rows}</div>
+    ${e.single ? "" : `<div class="row" style="margin-top:8px"><button class="btn tiny" data-addset="${id}">+ set</button>${en.sets.length > 1 ? `<button class="btn tiny" data-rmset="${id}">− set</button>` : ""}</div>`}
+  </div>`;
+}
+
+function viewDesk() {
+  const t = todayStr(), n = S.desk[t] || 0;
+  const done = S.deskChecks && S.deskChecks.date === t ? S.deskChecks.items : [];
+  return `
+    <div class="card">
+      <h2>Desk break · 4 minutes</h2>
+      <div class="muted small">Do this every 1–2 hours you sit, on any day, including rest days. It's the best thing here for those shoulder cramps.</div>
+      <div class="row" style="margin-top:10px"><span class="pill">${n} today</span><span class="muted small">Aim for 3 a day</span></div>
+    </div>
+    <div class="card">
+      ${DESK.map(([name, how], i) => `<label class="check ${done.includes(i) ? "done" : ""}"><input type="checkbox" data-desk="${i}" ${done.includes(i) ? "checked" : ""}><span><span class="t"><b>${name}</b></span><br><span class="small muted">${how}</span></span></label>`).join("")}
+    </div>
+    <button class="btn primary big" data-act="desk">Log a desk break</button>
+    <div class="card">
+      <h3>If a shoulder cramp starts</h3>
+      <ul class="small">
+        <li>Stop what you're doing and drop your shoulders. Slow breaths out through the mouth.</li>
+        <li>Gentle heat (warm shower or heat pack) for 10–15 minutes.</li>
+        <li>Very light stretch of the cramping muscle only to mild tension. No forcing.</li>
+        <li>Skip upper-body training that day; legs and walking are fine.</li>
+        <li>See a doctor or physio if cramps are frequent, wake you up, or come with numbness, tingling or weakness in the arm.</li>
+      </ul>
+    </div>`;
+}
+
+function spark(values, max) {
+  if (values.length < 2) return `<div class="muted small">Log a couple more sessions to see a trend.</div>`;
+  const W = 300, H = 56, P = 4;
+  const m = max ?? Math.max(...values, 1);
+  const pts = values.map((v, i) => [P + i * (W - 2 * P) / (values.length - 1), H - P - (v / m) * (H - 2 * P)]);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" points="${pts.map(p => p.join(",")).join(" ")}"/>${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="var(--accent)"/>`).join("")}</svg>`;
+}
+
+function viewProgress() {
+  const ss = S.sessions, t = todayStr();
+  const thisWeek = ss.filter(s => dayDiff(s.date, t) < 7).length;
+  const recentPain = ss.slice(-5);
+  const avgPain = recentPain.length ? (recentPain.reduce((a, s) => a + (s.pain || 0), 0) / recentPain.length).toFixed(1) : "–";
+  // sessions per week, last 8 weeks
+  const weeks = Array.from({ length: 8 }, (_, i) => ss.filter(s => { const dd = dayDiff(s.date, t); return dd >= (7 - i) * 7 && dd < (8 - i) * 7; }).length);
+  const bars = `<svg viewBox="0 0 300 70" style="width:100%;height:70px">${weeks.map((n, i) => `<rect x="${i * 37 + 4}" y="${60 - Math.min(n, 4) * 13}" width="28" height="${Math.min(n, 4) * 13 || 1}" rx="4" fill="${n >= 3 ? "var(--accent)" : "var(--muted)"}" opacity="${n ? 1 : .3}"/><text x="${i * 37 + 18}" y="69" font-size="8" text-anchor="middle" fill="var(--muted)">${i === 7 ? "now" : (7 - i) + "w"}</text>`).join("")}</svg>`;
+
+  const allIds = [...new Set([...WORKOUTS.A.list, ...WORKOUTS.B.list])];
+  const exRows = allIds.map(id => {
+    const vals = ss.filter(s => s.entries[id]).slice(-12).map(s => volume(s.entries[id]) + s.entries[id].level * 20);
+    const l = lastEntry(id);
+    return `<div class="hist"><div class="spread"><div><b>${EX[id].name}</b><div class="small muted">Level ${lvl(id) + 1}/${EX[id].levels.length}: ${esc(EX[id].levels[lvl(id)])}</div></div>${readyToLevelUp(id) ? `<span class="pill">level up</span>` : ""}</div>
+      <div class="small muted">${l ? "Last: " + l.en.sets.map(x => (x.reps || "–") + (x.weight ? "@" + x.weight : "")).join(", ") : "Not done yet"}</div>
+      ${vals.length >= 2 ? spark(vals) : ""}</div>`;
+  }).join("");
+
+  const deskDays = Object.keys(S.desk).filter(k => dayDiff(k, t) < 7);
+  const deskWeek = deskDays.reduce((a, k) => a + S.desk[k], 0);
+
+  return `
+    <div class="stats">
+      <div class="stat"><b>${ss.length}</b><span>workouts total</span></div>
+      <div class="stat"><b>${thisWeek}</b><span>last 7 days (goal 3)</span></div>
+      <div class="stat"><b>${deskWeek}</b><span>desk breaks, 7 days</span></div>
+    </div>
+    <div class="card"><h3>Workouts per week</h3><div class="muted small">Green = hit 3 that week.</div>${bars}</div>
+    <div class="card"><div class="spread"><h3>Shoulder discomfort</h3><span class="pill ${avgPain !== "–" && avgPain > 3 ? "warn" : ""}">avg ${avgPain}</span></div>
+      <div class="muted small">Last 5 sessions. Lower is better.</div>${spark(ss.slice(-20).map(s => s.pain || 0), 10)}</div>
+    <div class="card"><h3>Exercises</h3><div class="muted small">Trend combines level and reps, so leveling up shows as progress.</div>${exRows}</div>
+    <div class="card"><h3>History</h3>${ss.length ? ss.slice().reverse().map(s => `<div class="hist"><div class="spread"><div><b>${fmtDate(s.date)}</b> · ${WORKOUTS[s.type].name}</div><button class="btn tiny" data-del="${s.id}">Delete</button></div>
+      <div class="small muted">Felt ${s.feel || "–"} · shoulder ${s.pain || 0}/10</div>${s.notes ? `<div class="small">${esc(s.notes)}</div>` : ""}</div>`).join("") : `<div class="muted small">No workouts yet. Your first one is waiting on the Workout tab.</div>`}</div>
+    <div class="card"><h3>Your data</h3><div class="muted small">Saved only in this browser. Export a backup now and then.</div>
+      <div class="row" style="margin-top:8px"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button><button class="btn" data-act="reset">Reset all</button></div>
+      <input type="file" id="importFile" accept="application/json" hidden></div>`;
+}
+
+function viewPlan() {
+  return `
+    <div class="card">
+      <h2>The plan</h2>
+      <ul class="small">
+        <li><b>3 workouts a week</b>, alternating A and B, with a rest day between (e.g. Mon / Wed / Fri). About 30 minutes each.</li>
+        <li><b>Desk breaks daily</b>: 4 minutes, a few times a day. This matters as much as the workouts for your shoulder.</li>
+        <li><b>Weeks 1–2: 2 sets</b> of each exercise. <b>Week 3 on: 3 sets.</b> The app handles this.</li>
+        <li><b>Walk</b> 20–30 minutes on rest days if you can.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>How you'll progress</h3>
+      <ul class="small">
+        <li>Each exercise has levels, from very easy to harder. Start at level 1 even if it feels too easy. The first weeks are about learning the movement and letting joints catch up.</li>
+        <li>Add reps within the range each session. When you hit the top of the range on every set, it didn't feel hard, and shoulder discomfort was 2 or less, the app shows <span class="pill">Ready to level up</span>.</li>
+        <li>With one weight, progress comes from harder variations and slower lowering instead of heavier weight.</li>
+        <li>Bad day? Drop a level. That's part of the plan, not a failure.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Shoulder-friendly choices</h3>
+      <ul class="small">
+        <li>More pulling than pushing (rows, face pulls, Y-T raises) to balance desk posture.</li>
+        <li>No ring dips, ring push-ups, ring support holds, or overhead pressing for now. Those can come after 2–3 months of pain-free training.</li>
+        <li>Shoulders stay down and away from your ears in every exercise. If you feel your neck working, make it easier.</li>
+        <li>Muscle burn is fine. Sharp, pinching or lingering pain is not; stop that exercise and drop a level next time.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Workout A</h3><div class="small muted">${WORKOUTS.A.list.map(id => EX[id].name).join(" · ")}</div>
+      <h3 style="margin-top:10px">Workout B</h3><div class="small muted">${WORKOUTS.B.list.map(id => EX[id].name).join(" · ")}</div>
+    </div>
+    <div class="note warn small">This is general fitness guidance, not medical advice. If shoulder cramps are frequent, severe, or come with numbness or tingling, get them checked by a doctor or physiotherapist before ramping up.</div>`;
+}
+
+// ---------- Events ----------
+function bind() {
+  const app = $("#app"), d = S.draft;
+  app.querySelectorAll("input[data-ex]").forEach(inp => inp.addEventListener("input", () => {
+    d.entries[inp.dataset.ex].sets[inp.dataset.i][inp.dataset.f] = inp.value; save();
+  }));
+  app.querySelectorAll("[data-lvl]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.lvl, n = Math.max(0, Math.min(EX[id].levels.length - 1, d.entries[id].level + Number(b.dataset.d)));
+    d.entries[id].level = n; S.levels[id] = n; save(); render();
+  }));
+  app.querySelectorAll("[data-addset]").forEach(b => b.addEventListener("click", () => { d.entries[b.dataset.addset].sets.push({ reps: "", weight: "" }); save(); render(); }));
+  app.querySelectorAll("[data-rmset]").forEach(b => b.addEventListener("click", () => { d.entries[b.dataset.rmset].sets.pop(); save(); render(); }));
+  app.querySelectorAll("[data-list]").forEach(c => c.addEventListener("change", () => {
+    const arr = d[c.dataset.list], i = Number(c.dataset.i);
+    if (c.checked) { if (!arr.includes(i)) arr.push(i); } else arr.splice(arr.indexOf(i), 1);
+    c.closest(".check").classList.toggle("done", c.checked);
+    const sum = c.closest("details").querySelector("summary .muted"); if (sum) sum.textContent = arr.length + "/" + sum.textContent.split("/")[1];
+    save();
+  }));
+  app.querySelectorAll("[data-feel]").forEach(b => b.addEventListener("click", () => { d.feel = b.dataset.feel; save(); render(); }));
+  const pain = $("#pain"); if (pain) pain.addEventListener("input", () => { d.pain = Number(pain.value); $("#painVal").textContent = d.pain + "/10"; save(); });
+  const notes = $("#notes"); if (notes) notes.addEventListener("input", () => { d.notes = notes.value; save(); });
+  app.querySelectorAll("[data-desk]").forEach(c => c.addEventListener("change", () => {
+    const t = todayStr(); if (!S.deskChecks || S.deskChecks.date !== t) S.deskChecks = { date: t, items: [] };
+    const i = Number(c.dataset.desk), arr = S.deskChecks.items;
+    if (c.checked) { if (!arr.includes(i)) arr.push(i); } else arr.splice(arr.indexOf(i), 1);
+    c.closest(".check").classList.toggle("done", c.checked); save();
+  }));
+  app.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => {
+    if (!confirm("Delete this workout?")) return;
+    S.sessions = S.sessions.filter(s => s.id !== b.dataset.del); save(); render();
+  }));
+  app.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => actions[b.dataset.act]()));
+  const f = $("#importFile"); if (f) f.addEventListener("change", () => {
+    const file = f.files[0]; if (!file) return;
+    file.text().then(txt => { const data = JSON.parse(txt); if (!data.sessions) throw 0; S = data; save(); render(); alert("Backup imported."); }).catch(() => alert("That file doesn't look like a backup."));
+  });
+}
+
+const actions = {
+  swap() {
+    const d = S.draft;
+    if (Object.values(d.entries).some(en => en.sets.some(s => s.reps !== "")) && !confirm("Switch workouts? Numbers entered so far will be cleared.")) return;
+    S.draft = freshDraft(d.type === "A" ? "B" : "A"); save(); render();
+  },
+  finish() {
+    const d = S.draft;
+    const entries = {};
+    Object.entries(d.entries).forEach(([id, en]) => {
+      const sets = en.sets.filter(s => s.reps !== "");
+      if (sets.length) entries[id] = { level: en.level, sets };
+    });
+    if (!Object.keys(entries).length) { alert("Enter at least one set before saving."); return; }
+    S.sessions.push({ id: Date.now().toString(36), date: d.date, type: d.type, entries, feel: d.feel, pain: d.pain, notes: d.notes });
+    S.sessions.sort((a, b) => a.date.localeCompare(b.date));
+    S.draft = null; save();
+    tab = "progress"; render(); window.scrollTo(0, 0);
+    const ups = Object.keys(entries).filter(readyToLevelUp).map(id => EX[id].name);
+    setTimeout(() => alert("Workout saved. Rest tomorrow." + (ups.length ? "\n\nReady to level up next time: " + ups.join(", ") + "." : "")), 50);
+  },
+  desk() {
+    const t = todayStr(); S.desk[t] = (S.desk[t] || 0) + 1; S.deskChecks = { date: t, items: [] }; save(); render();
+  },
+  export() {
+    const blob = new Blob([JSON.stringify(S, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "steady-strength-" + todayStr() + ".json"; a.click();
+  },
+  import() { $("#importFile").click(); },
+  reset() { if (confirm("Delete ALL workouts and settings? Export a backup first if unsure.")) { S = { sessions: [], levels: {}, desk: {}, draft: null }; save(); render(); } }
+};
+
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => { tab = b.dataset.tab; render(); window.scrollTo(0, 0); }));
+
+// ---------- Timer ----------
+let tEnd = 0, tInt = null, audio;
+function beep() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    [0, .25, .5].forEach(o => { const os = audio.createOscillator(), g = audio.createGain(); os.frequency.value = 880; os.connect(g); g.connect(audio.destination); g.gain.setValueAtTime(.2, audio.currentTime + o); g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + o + .2); os.start(audio.currentTime + o); os.stop(audio.currentTime + o + .2); });
+  } catch (e) {}
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+function tick() {
+  const left = Math.max(0, Math.round((tEnd - Date.now()) / 1000));
+  $("#tDisplay").textContent = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+  if (left <= 0) { clearInterval(tInt); tInt = null; beep(); $("#tDisplay").textContent = "Go!"; }
+}
+document.querySelectorAll("#timer [data-t]").forEach(b => b.addEventListener("click", () => {
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (e) {}
+  tEnd = Date.now() + Number(b.dataset.t) * 1000; clearInterval(tInt); tInt = setInterval(tick, 250); tick();
+}));
+$("#tStop").addEventListener("click", () => { clearInterval(tInt); tInt = null; $("#tDisplay").textContent = "0:00"; });
+
+render();
+</script>
+</body>
+</html>
