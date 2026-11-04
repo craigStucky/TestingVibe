@@ -12,6 +12,7 @@ To use it on your phone from anywhere, turn on GitHub Pages for this repo (Setti
 
 - **3 workouts a week**, alternating A and B, with a rest day between (e.g. Mon / Wed / Fri). About 30 minutes each.
 - **Weeks 1–2: 2 sets** per exercise. **Week 3 onward: 3 sets.**
+- **Flow day (optional, any day)**: sun salutations. One set = 24 poses (12 leading with the right leg, 12 with the left). Guided mode walks you through each pose with breath cues and counts sets. Starts at 2 sets with shoulder-friendly versions (knees down, knees-chest-chin, low cobra); chaturanga and upward dog come at the top level.
 - **Desk breaks every day**: a 4-minute routine a few times a day (chin tucks, shoulder blade squeezes, neck and chest stretches).
 - Each session: 5-minute warm-up → exercises → jump rope finisher → 3-minute cool-down.
 

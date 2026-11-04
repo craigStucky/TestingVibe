@@ -81,7 +81,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .check:last-child { border-bottom: 0; }
 .check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); flex: none; }
 .check.done .t { text-decoration: line-through; color: var(--muted); }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
 .stat b { display: block; font-size: 1.4rem; }
 .stat span { font-size: .78rem; color: var(--muted); }
@@ -105,6 +105,20 @@ svg.spark { width: 100%; height: 56px; display: block; }
 #ask .card { max-width: 380px; width: 100%; }
 #sync:empty { display: none; }
 button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#flow { position: fixed; inset: 0; z-index: 35; background: var(--bg); overflow-y: auto;
+  padding-block: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+#flow .inner { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+#flow h2 { margin: 0; font-size: 1.6rem; text-wrap: balance; }
+#flow .sk { color: var(--muted); font-style: italic; font-size: .9rem; margin-top: -10px; }
+.breath { width: 130px; height: 130px; margin: 6px auto; border-radius: 50%; background: var(--soft); border: 3px solid var(--accent);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em;
+  transform: scale(.75); transition-property: transform; transition-timing-function: ease-in-out; }
+.breath.in { transform: scale(1); }
+.fbar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.fbar i { display: block; height: 100%; background: var(--accent); }
+.pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) { .breath { transition: none !important; } }
 .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 </style>
 </head>
@@ -116,6 +130,20 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 </header>
 <main id="app"></main>
 <div id="toast" hidden></div>
+<div id="flow" hidden><div class="inner">
+  <div class="spread small"><span id="fSet"></span><span id="fCount"></span></div>
+  <div class="fbar"><i id="fBar"></i></div>
+  <div class="breath" id="fBreath"></div>
+  <h2 id="fName"></h2>
+  <div class="sk" id="fSk"></div>
+  <p id="fCue" style="margin:0"></p>
+  <div class="row" style="justify-content:center">
+    <button class="btn" id="fPrev">Back</button><button class="btn primary" id="fPlay">Pause</button><button class="btn" id="fNext">Next</button>
+  </div>
+  <div class="row small" style="justify-content:center"><span class="muted">Pace</span><button class="btn tiny" id="fSlow">Slower</button><b id="fPace"></b><button class="btn tiny" id="fFast">Faster</button></div>
+  <button class="btn" id="fClose">Finish</button>
+  <div class="muted small">Your sets are counted automatically. Pinch or sharp pain in the shoulder: rest in child's pose.</div>
+</div></div>
 <div id="ask" hidden><div class="card"><p id="askMsg" style="margin-top:0"></p><div class="row" style="justify-content:flex-end"><button class="btn" id="askNo">Cancel</button><button class="btn primary" id="askYes">Yes</button></div></div></div>
 
 <div id="timer"><div class="box">
@@ -197,10 +225,46 @@ const EX = {
   }
 };
 
+EX.sunsal = {
+  name: "Sun salutation", unit: "sets", single: true, why: "A full-body vinyasa flow. One set = 24 poses: 12 leading with the right leg, then 12 with the left. Move with your breath.",
+  cues: ["Inhale as you open or lift, exhale as you fold or lower", "Keep shoulders down, away from your ears, in every pose", "Bend your knees in forward folds and downward dog as much as you like", "Knees-chest-chin and low cobra are the shoulder-friendly choices; use them until your shoulder is happy"],
+  levels: ["Knees down for plank, knees-chest-chin, low cobra", "Same, more sets", "Same, more sets", "Full plank, knees-chest-chin, cobra", "Full plank, knees-chest-chin, cobra, more sets", "Chaturanga (knees down) and upward dog"],
+  targets: [2, 3, 5, 5, 8, 8]
+};
+// One side of a sun salutation. {lead} is the leg that steps back first. "mod" = shoulder-friendly version (levels 1-3).
+const SUN = [
+  { n: "Prayer pose", sk: "Pranamasana", b: "exhale", c: "Stand tall, feet together, palms together at your chest." },
+  { n: "Raised arms", sk: "Hasta Uttanasana", b: "inhale", c: "Reach up and slightly back. Only a gentle arch; shoulders stay low." },
+  { n: "Standing forward fold", sk: "Uttanasana", b: "exhale", c: "Hinge at the hips and fold. Bend your knees so your hands reach the floor." },
+  { n: "Low lunge", sk: "Ashwa Sanchalanasana", b: "inhale", c: "Step your {lead} leg back, knee down. Lift your chest and look forward." },
+  { n: "Plank", sk: "Phalakasana", b: "hold", c: "Step the other foot back. Hands under shoulders, push the floor away.", mod: "Step the other foot back and lower both knees. Hands under shoulders, push the floor away." },
+  { n: "Knees, chest, chin", sk: "Ashtanga Namaskara", b: "exhale", c: "Knees down, then chest and chin to the floor, hips up. Elbows hug your ribs.", hard: { n: "Chaturanga", sk: "Chaturanga Dandasana", c: "Knees down, lower halfway with elbows hugging your ribs, then to the floor." } },
+  { n: "Cobra", sk: "Bhujangasana", b: "inhale", c: "Lift your chest with your back muscles. Elbows bent, shoulders down.", mod: "Low cobra: lift your chest a few inches with your back, barely pressing your hands.", hard: { n: "Upward dog", sk: "Urdhva Mukha Svanasana", c: "Press up, thighs lifted, shoulders down and back. Skip it if the shoulder pinches." } },
+  { n: "Downward dog", sk: "Adho Mukha Svanasana", b: "exhale", c: "Tuck toes, lift hips up and back. Bend your knees; hands a bit wider than shoulders is fine." },
+  { n: "Low lunge", sk: "Ashwa Sanchalanasana", b: "inhale", c: "Step your {lead} foot forward between your hands, back knee down. Lift your chest." },
+  { n: "Standing forward fold", sk: "Uttanasana", b: "exhale", c: "Step the back foot forward and fold. Soft knees." },
+  { n: "Raised arms", sk: "Hasta Uttanasana", b: "inhale", c: "Rise up slowly with a flat back and reach up." },
+  { n: "Prayer pose", sk: "Pranamasana", b: "exhale", c: "Hands back to your chest. One breath here before the next side." }
+];
+function sunPoses(L) {
+  const out = [];
+  ["right", "left"].forEach(lead => SUN.forEach(p => {
+    let n = p.n, sk = p.sk, c = p.c;
+    if (L <= 2 && p.mod) c = p.mod;
+    if (L >= 5 && p.hard) ({ n, sk, c } = p.hard);
+    out.push({ n, sk, b: p.b, c: c.replace("{lead}", lead), lead });
+  }));
+  return out;
+}
+
 const WORKOUTS = {
   A: { name: "Workout A", focus: "Rows, squats, push-ups, core", list: ["ringrow", "squat", "pushup", "bridge", "deadbug", "rope"] },
-  B: { name: "Workout B", focus: "Back, hips, shoulder health, core", list: ["row1", "hinge", "facepull", "split", "yt", "sideplank", "rope"] }
+  B: { name: "Workout B", focus: "Back, hips, shoulder health, core", list: ["row1", "hinge", "facepull", "split", "yt", "sideplank", "rope"] },
+  C: { name: "Flow day", short: "Flow", focus: "Sun salutations. Gentle enough for rest days", list: ["sunsal"], mins: "~10–20 min" }
 };
+WORKOUTS.A.short = "A"; WORKOUTS.B.short = "B";
+const FLOW_WARM = ["Neck half-circles, 5 each way", "Wrist circles, 10 each way", "Cat-cow, 8 slow reps", "Child's pose, 5 breaths"];
+const FLOW_COOL = ["Seated forward fold, 5 breaths", "Lying twist, 5 breaths each side", "Lie still on your back (savasana), 1–2 minutes"];
 
 const WARMUP = [
   "2 min easy rope skipping or marching in place",
@@ -293,7 +357,8 @@ const dayDiff = (a, b) => Math.round((new Date(b + "T12:00") - new Date(a + "T12
 const fmtDate = d => new Date(d + "T12:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 const lvl = id => Math.min(S.levels[id] || 0, EX[id].levels.length - 1);
 const lastSession = () => S.sessions[S.sessions.length - 1];
-const nextType = () => { const l = lastSession(); return l && l.type === "A" ? "B" : "A"; };
+const lastStrength = () => { for (let i = S.sessions.length - 1; i >= 0; i--) if (S.sessions[i].type !== "C") return S.sessions[i]; return null; };
+const nextType = () => { const l = lastStrength(); return l && l.type === "A" ? "B" : "A"; };
 function weekNumber() {
   if (!S.sessions.length) return 1;
   return Math.floor(dayDiff(S.sessions[0].date, todayStr()) / 7) + 1;
@@ -354,9 +419,10 @@ function render() {
 function viewToday() {
   const d = getDraft();
   const w = WORKOUTS[d.type];
-  const last = lastSession();
+  const last = lastStrength(), flow = d.type === "C";
   let restNote = "";
-  if (last && last.date === todayStr()) restNote = `<div class="note">You already logged a workout today. Nice. Tomorrow is a rest day; a desk break is plenty.</div>`;
+  if (flow) restNote = "";
+  else if (last && last.date === todayStr()) restNote = `<div class="note">You already logged a workout today. Nice. Tomorrow is a rest day; a desk break is plenty.</div>`;
   else if (last && dayDiff(last.date, todayStr()) === 1) restNote = `<div class="note warn">You trained yesterday. A rest day between workouts helps your body adapt. Today, consider just the desk break routine and a walk.</div>`;
   else if (last && dayDiff(last.date, todayStr()) > 6) restNote = `<div class="note">It's been a while. No problem. Start where you left off and go easy today.</div>`;
 
@@ -365,14 +431,16 @@ function viewToday() {
     ${restNote}
     <div class="card">
       <div class="spread">
-        <div><h2>${w.name}</h2><div class="muted small">${w.focus} · week ${weekNumber()} · ~30 min</div></div>
-        <button class="btn tiny" data-act="swap">Switch to ${d.type === "A" ? "B" : "A"}</button>
+        <div><h2>${w.name}</h2><div class="muted small">${w.focus} · week ${weekNumber()} · ${w.mins || "~30 min"}</div></div>
       </div>
-      <div class="note small">Rest 60–90s between sets (use the timer below). Effort should feel like you could do 2–3 more reps. Sharp or pinching shoulder pain means stop that exercise.</div>
+      <div class="pick">${Object.keys(WORKOUTS).map(k => `<button class="btn tiny ${k === d.type ? "on" : ""}" data-pick="${k}">${WORKOUTS[k].short}</button>`).join("")}</div>
+      <div class="note small">${flow
+        ? "Move slowly with your breath. One set = 24 poses (12 leading right, 12 leading left). Use guided mode below; rest a few breaths between sets."
+        : "Rest 60–90s between sets (use the timer below). Effort should feel like you could do 2–3 more reps. Sharp or pinching shoulder pain means stop that exercise."}</div>
     </div>
-    ${checklistCard("Warm-up (5 min)", WARMUP, "warm", d)}
+    ${checklistCard(flow ? "Warm-up (2 min)" : "Warm-up (5 min)", flow ? FLOW_WARM : WARMUP, "warm", d)}
     ${exHtml}
-    ${checklistCard("Cool-down (3 min)", COOLDOWN, "cool", d)}
+    ${checklistCard(flow ? "Cool-down (3 min)" : "Cool-down (3 min)", flow ? FLOW_COOL : COOLDOWN, "cool", d)}
     <div class="card">
       <h3>How did it go?</h3>
       <div class="feel" style="margin-top:8px">
@@ -385,7 +453,7 @@ function viewToday() {
       </div>
       <div style="margin-top:12px"><label for="notes" class="small muted">Notes</label><textarea id="notes" placeholder="Sleep, energy, anything that felt off...">${esc(d.notes)}</textarea></div>
     </div>
-    <button class="btn primary big" data-act="finish">Save workout</button>
+    <button class="btn primary big" data-act="finish">${flow ? "Save flow" : "Save workout"}</button>
   `;
 }
 
@@ -402,7 +470,7 @@ function exerciseCard(id, d) {
   const prev = lastEntry(id);
   const prevTxt = prev ? `Last time (${fmtDate(prev.s.date)}): ${prev.en.sets.map(x => (x.reps || "–") + (x.weight ? "@" + x.weight : "")).join(", ")}${prev.en.level !== L ? " at a different level" : ""}` : "First time. Find a comfortable starting point.";
   const up = readyToLevelUp(id) && L === lvl(id);
-  const target = e.single ? `Target: ${lo} rounds` : `${en.sets.length} sets × ${lo === hi ? lo : lo + "–" + hi} ${unitLabel(id)}`;
+  const target = e.single ? `Target: ${lo} ${e.unit === "sets" ? "sets of 24 poses" : "rounds"}` : `${en.sets.length} sets × ${lo === hi ? lo : lo + "–" + hi} ${unitLabel(id)}`;
   const rows = en.sets.map((s, i) => `
     <span class="small muted">${e.single ? "Done" : "Set " + (i + 1)}</span>
     <input type="number" inputmode="numeric" min="0" placeholder="${e.unit}" data-ex="${id}" data-i="${i}" data-f="reps" value="${esc(s.reps)}">
@@ -419,7 +487,9 @@ function exerciseCard(id, d) {
     <div class="row small" style="margin-top:6px"><span class="pill">${target}</span>${up ? `<span class="pill" style="background:var(--accent);color:var(--accent-ink)">Ready to level up? Tap +</span>` : ""}</div>
     <div class="muted small" style="margin-top:6px">${esc(prevTxt)}</div>
     <details><summary>How to do it</summary><div class="small muted">${esc(e.why)}</div><ul class="small">${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+      ${id === "sunsal" ? `<div class="small"><b>The 12 poses</b> (then repeat leading with the other leg):</div><ol class="small">${sunPoses(L).slice(0, 12).map(p => `<li>${esc(p.n)} <span class="muted">· ${esc(p.sk)} · ${p.b}</span></li>`).join("")}</ol>` : ""}
       <div class="small muted">All levels: ${e.levels.map((x, i) => (i + 1) + ". " + esc(x)).join(" · ")}</div></details>
+    ${id === "sunsal" ? `<button class="btn primary" style="width:100%;margin-top:10px" data-act="guide">Start guided flow</button>` : ""}
     <div class="sets ${e.weight ? "" : "noweight"}">${rows}</div>
     ${e.single ? "" : `<div class="row" style="margin-top:8px"><button class="btn tiny" data-addset="${id}">+ set</button>${en.sets.length > 1 ? `<button class="btn tiny" data-rmset="${id}">− set</button>` : ""}</div>`}
   </div>`;
@@ -460,14 +530,16 @@ function spark(values, max) {
 
 function viewProgress() {
   const ss = S.sessions, t = todayStr();
-  const thisWeek = ss.filter(s => dayDiff(s.date, t) < 7).length;
+  const strength = ss.filter(s => s.type !== "C");
+  const thisWeek = strength.filter(s => dayDiff(s.date, t) < 7).length;
+  const flowSets = ss.filter(s => s.type === "C" && dayDiff(s.date, t) < 7).reduce((a, s) => a + (s.entries.sunsal ? volume(s.entries.sunsal) : 0), 0);
   const recentPain = ss.slice(-5);
   const avgPain = recentPain.length ? (recentPain.reduce((a, s) => a + (s.pain || 0), 0) / recentPain.length).toFixed(1) : "–";
   // sessions per week, last 8 weeks
-  const weeks = Array.from({ length: 8 }, (_, i) => ss.filter(s => { const dd = dayDiff(s.date, t); return dd >= (7 - i) * 7 && dd < (8 - i) * 7; }).length);
+  const weeks = Array.from({ length: 8 }, (_, i) => strength.filter(s => { const dd = dayDiff(s.date, t); return dd >= (7 - i) * 7 && dd < (8 - i) * 7; }).length);
   const bars = `<svg viewBox="0 0 300 70" style="width:100%;height:70px">${weeks.map((n, i) => `<rect x="${i * 37 + 4}" y="${60 - Math.min(n, 4) * 13}" width="28" height="${Math.min(n, 4) * 13 || 1}" rx="4" fill="${n >= 3 ? "var(--accent)" : "var(--muted)"}" opacity="${n ? 1 : .3}"/><text x="${i * 37 + 18}" y="69" font-size="8" text-anchor="middle" fill="var(--muted)">${i === 7 ? "now" : (7 - i) + "w"}</text>`).join("")}</svg>`;
 
-  const allIds = [...new Set([...WORKOUTS.A.list, ...WORKOUTS.B.list])];
+  const allIds = [...new Set([...WORKOUTS.A.list, ...WORKOUTS.B.list, ...WORKOUTS.C.list])];
   const exRows = allIds.map(id => {
     const vals = ss.filter(s => s.entries[id]).slice(-12).map(s => volume(s.entries[id]) + s.entries[id].level * 20);
     const l = lastEntry(id);
@@ -481,11 +553,12 @@ function viewProgress() {
 
   return `
     <div class="stats">
-      <div class="stat"><b>${ss.length}</b><span>workouts total</span></div>
-      <div class="stat"><b>${thisWeek}</b><span>last 7 days (goal 3)</span></div>
+      <div class="stat"><b>${strength.length}</b><span>strength workouts total</span></div>
+      <div class="stat"><b>${thisWeek}</b><span>strength, last 7 days (goal 3)</span></div>
+      <div class="stat"><b>${flowSets}</b><span>sun salutation sets, 7 days</span></div>
       <div class="stat"><b>${deskWeek}</b><span>desk breaks, 7 days</span></div>
     </div>
-    <div class="card"><h3>Workouts per week</h3><div class="muted small">Green = hit 3 that week.</div>${bars}</div>
+    <div class="card"><h3>Strength workouts per week</h3><div class="muted small">Green = hit 3 that week. Flow days aren't counted here.</div>${bars}</div>
     <div class="card"><div class="spread"><h3>Shoulder discomfort</h3><span class="pill ${avgPain !== "–" && avgPain > 3 ? "warn" : ""}">avg ${avgPain}</span></div>
       <div class="muted small">Last 5 sessions. Lower is better.</div>${spark(ss.slice(-20).map(s => s.pain || 0), 10)}</div>
     <div class="card"><h3>Exercises</h3><div class="muted small">Trend combines level and reps, so leveling up shows as progress.</div>${exRows}</div>
@@ -504,6 +577,7 @@ function viewPlan() {
         <li><b>3 workouts a week</b>, alternating A and B, with a rest day between (e.g. Mon / Wed / Fri). About 30 minutes each.</li>
         <li><b>Desk breaks daily</b>: 4 minutes, a few times a day. This matters as much as the workouts for your shoulder.</li>
         <li><b>Weeks 1–2: 2 sets</b> of each exercise. <b>Week 3 on: 3 sets.</b> The app handles this.</li>
+        <li><b>Flow day (sun salutations)</b> on rest days or any morning. It's gentle, so it doesn't break the rest-day rule. Start with 2 sets of 24 poses.</li>
         <li><b>Walk</b> 20–30 minutes on rest days if you can.</li>
       </ul>
     </div>
@@ -520,6 +594,7 @@ function viewPlan() {
       <h3>Shoulder-friendly choices</h3>
       <ul class="small">
         <li>More pulling than pushing (rows, face pulls, Y-T raises) to balance desk posture.</li>
+        <li>In sun salutations, use knees-chest-chin and low cobra before chaturanga and upward dog.</li>
         <li>No ring dips, ring push-ups, ring support holds, or overhead pressing for now. Those can come after 2–3 months of pain-free training.</li>
         <li>Shoulders stay down and away from your ears in every exercise. If you feel your neck working, make it easier.</li>
         <li>Muscle burn is fine. Sharp, pinching or lingering pain is not; stop that exercise and drop a level next time.</li>
@@ -528,6 +603,7 @@ function viewPlan() {
     <div class="card">
       <h3>Workout A</h3><div class="small muted">${WORKOUTS.A.list.map(id => EX[id].name).join(" · ")}</div>
       <h3 style="margin-top:10px">Workout B</h3><div class="small muted">${WORKOUTS.B.list.map(id => EX[id].name).join(" · ")}</div>
+      <h3 style="margin-top:10px">Flow day</h3><div class="small muted">Sun salutations: 12 poses leading right + 12 leading left = 1 set. Shoulder-friendly versions first.</div>
     </div>
     <div class="note warn small">This is general fitness guidance, not medical advice. If shoulder cramps are frequent, severe, or come with numbness or tingling, get them checked by a doctor or physiotherapist before ramping up.</div>`;
 }
@@ -564,6 +640,7 @@ function bind() {
     if (!(await ask("Delete this workout?"))) return;
     S.sessions = S.sessions.filter(s => s.id !== b.dataset.del); cloudDelete(b.dataset.del); save(); render();
   }));
+  app.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => actions.pick(b.dataset.pick)));
   app.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => actions[b.dataset.act]()));
   const f = $("#importFile"); if (f) f.addEventListener("change", () => {
     const file = f.files[0]; if (!file) return;
@@ -572,11 +649,12 @@ function bind() {
 }
 
 const actions = {
-  async swap() {
-    const d = S.draft;
+  async pick(type) {
+    const d = S.draft; if (type === d.type) return;
     if (Object.values(d.entries).some(en => en.sets.some(s => s.reps !== "")) && !(await ask("Switch workouts? Numbers entered so far will be cleared."))) return;
-    S.draft = freshDraft(d.type === "A" ? "B" : "A"); save(); render();
+    S.draft = freshDraft(type); save(); render();
   },
+  guide() { flowStart(); },
   finish() {
     const d = S.draft;
     const entries = {};
@@ -591,7 +669,7 @@ const actions = {
     S.draft = null; save();
     tab = "progress"; render(); window.scrollTo(0, 0);
     const ups = Object.keys(entries).filter(readyToLevelUp).map(id => EX[id].name);
-    toast("Workout saved. Rest tomorrow." + (ups.length ? "\nReady to level up: " + ups.join(", ") + "." : ""));
+    toast((d.type === "C" ? "Flow saved." : "Workout saved. Rest tomorrow.") + (ups.length ? "\nReady to level up: " + ups.join(", ") + "." : ""));
   },
   desk() {
     const t = todayStr(); S.desk[t] = (S.desk[t] || 0) + 1; S.deskChecks = { date: t, items: [] }; save(); cloudMeta(); render(); toast("Desk break logged.");
@@ -610,6 +688,49 @@ const actions = {
 };
 
 document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => { tab = b.dataset.tab; render(); window.scrollTo(0, 0); }));
+
+// ---------- Guided sun salutation ----------
+const F = { i: 0, poses: [], timer: null, playing: true, pace: 5 };
+try { F.pace = Number(localStorage.getItem(KEY + "-pace")) || 5; } catch (e) {}
+function flowStart() {
+  const en = S.draft.entries.sunsal; if (!en) return;
+  F.poses = sunPoses(en.level); F.i = 0; F.playing = true;
+  $("#flow").hidden = false; document.body.style.overflow = "hidden";
+  try { navigator.wakeLock && navigator.wakeLock.request("screen").then(l => F.lock = l).catch(() => {}); } catch (e) {}
+  flowShow();
+}
+function flowSetsDone() { return Number(S.draft.entries.sunsal.sets[0].reps) || 0; }
+function flowShow() {
+  clearTimeout(F.timer);
+  const p = F.poses[F.i], en = S.draft.entries.sunsal, target = EX.sunsal.targets[en.level];
+  $("#fSet").textContent = "Set " + (flowSetsDone() + 1) + " of " + target;
+  $("#fCount").textContent = "Pose " + (F.i + 1) + " / 24 · leading " + p.lead;
+  $("#fBar").style.width = ((F.i + 1) / 24 * 100) + "%";
+  $("#fName").textContent = p.n; $("#fSk").textContent = p.sk; $("#fCue").textContent = p.c;
+  const br = $("#fBreath"); br.textContent = p.b; br.style.transitionDuration = F.pace + "s";
+  br.classList.toggle("in", p.b === "inhale" || (p.b === "hold" && F.i > 0 && F.poses[F.i - 1].b === "inhale"));
+  $("#fPlay").textContent = F.playing ? "Pause" : "Play";
+  $("#fPace").textContent = F.pace + "s / breath";
+  if (F.playing) F.timer = setTimeout(() => flowStep(1), F.pace * 1000);
+}
+function flowStep(dir) {
+  if (dir > 0 && F.i === 23) {
+    const en = S.draft.entries.sunsal, n = flowSetsDone() + 1, target = EX.sunsal.targets[en.level];
+    en.sets[0].reps = String(n); save(); beep();
+    if (n >= target) { F.playing = false; flowClose(); toast("All " + target + " sets done. Lovely work."); return; }
+    toast("Set " + n + " done. A few easy breaths, then the next one.");
+    F.i = 0;
+  } else F.i = Math.max(0, Math.min(23, F.i + dir));
+  flowShow();
+}
+function flowClose() { clearTimeout(F.timer); $("#flow").hidden = true; document.body.style.overflow = ""; try { F.lock && F.lock.release(); } catch (e) {} render(); }
+$("#fNext").addEventListener("click", () => flowStep(1));
+$("#fPrev").addEventListener("click", () => flowStep(-1));
+$("#fPlay").addEventListener("click", () => { F.playing = !F.playing; flowShow(); });
+$("#fClose").addEventListener("click", flowClose);
+const setPace = v => { F.pace = Math.max(3, Math.min(10, v)); try { localStorage.setItem(KEY + "-pace", F.pace); } catch (e) {} flowShow(); };
+$("#fSlow").addEventListener("click", () => setPace(F.pace + 1));
+$("#fFast").addEventListener("click", () => setPace(F.pace - 1));
 
 // ---------- Timer ----------
 let tEnd = 0, tInt = null, audio;
