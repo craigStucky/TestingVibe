@@ -97,6 +97,9 @@ svg.spark { width: 100%; height: 56px; display: block; }
   display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.2); max-width: 100%; flex-wrap: wrap;
 }
 #timer .t { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 46px; }
+#timer .box.ring { background: var(--accent); color: var(--accent-ink); animation: pulse .5s ease-in-out 4; }
+@keyframes pulse { 50% { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { #timer .box.ring { animation: none; } }
 #timer button { border: 0; border-radius: 99px; padding: 6px 10px; font: inherit; font-size: .82rem; background: rgba(127,127,127,.25); color: inherit; }
 #toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 30;
   background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 12px; font-weight: 600; max-width: calc(100% - 32px);
@@ -914,24 +917,44 @@ $("#fSlow").addEventListener("click", () => setPace(F.pace + 1));
 $("#fFast").addEventListener("click", () => setPace(F.pace - 1));
 
 // ---------- Timer ----------
-let tEnd = 0, tInt = null, audio;
-function beep() {
+let tEnd = 0, tInt = null, tLast = -1, tReset = null, audio;
+function getAudio() {
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch (e) {}
+  return audio;
+}
+// One short tone. at = seconds from now.
+function tone(freq, at, dur, vol) {
+  const a = getAudio(); if (!a) return;
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    [0, .25, .5].forEach(o => { const os = audio.createOscillator(), g = audio.createGain(); os.frequency.value = 880; os.connect(g); g.connect(audio.destination); g.gain.setValueAtTime(.2, audio.currentTime + o); g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + o + .2); os.start(audio.currentTime + o); os.stop(audio.currentTime + o + .2); });
+    const os = a.createOscillator(), g = a.createGain(), t = a.currentTime + at;
+    os.type = "triangle"; os.frequency.value = freq; os.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    os.start(t); os.stop(t + dur + 0.02);
   } catch (e) {}
-  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+// Short chime (used when a sun salutation set finishes)
+function beep() { [0, .25, .5].forEach(o => tone(880, o, .2, .35)); if (navigator.vibrate) navigator.vibrate([200, 100, 200]); }
+// Rest-timer alarm: three double beeps (about 2 seconds), then it stops by itself.
+function alarm() {
+  [0, .7, 1.4].forEach(o => { tone(1046, o, .16, .6); tone(1046, o + .22, .16, .6); });
+  if (navigator.vibrate) navigator.vibrate([250, 120, 250, 330, 250, 120, 250]);
+  const box = $("#timer .box"); box.classList.add("ring");
+  clearTimeout(tReset);
+  tReset = setTimeout(() => { box.classList.remove("ring"); $("#tDisplay").textContent = "0:00"; }, 3000);
 }
 function tick() {
-  const left = Math.max(0, Math.round((tEnd - Date.now()) / 1000));
+  const left = Math.max(0, Math.ceil((tEnd - Date.now()) / 1000));
   $("#tDisplay").textContent = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
-  if (left <= 0) { clearInterval(tInt); tInt = null; beep(); $("#tDisplay").textContent = "Go!"; }
+  if (left !== tLast && left >= 1 && left <= 3) tone(660, 0, .08, .25); // soft tick at 3, 2, 1
+  tLast = left;
+  if (left <= 0) { clearInterval(tInt); tInt = null; $("#tDisplay").textContent = "Go!"; alarm(); }
 }
+function timerStop() { clearInterval(tInt); tInt = null; clearTimeout(tReset); $("#timer .box").classList.remove("ring"); $("#tDisplay").textContent = "0:00"; }
 document.querySelectorAll("#timer [data-t]").forEach(b => b.addEventListener("click", () => {
-  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (e) {}
-  tEnd = Date.now() + Number(b.dataset.t) * 1000; clearInterval(tInt); tInt = setInterval(tick, 250); tick();
+  getAudio(); timerStop();
+  tEnd = Date.now() + Number(b.dataset.t) * 1000; tLast = -1; tInt = setInterval(tick, 200); tick();
 }));
-$("#tStop").addEventListener("click", () => { clearInterval(tInt); tInt = null; $("#tDisplay").textContent = "0:00"; });
+$("#tStop").addEventListener("click", timerStop);
 
 render();
 initCloud();
