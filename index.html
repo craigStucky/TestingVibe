@@ -10,19 +10,19 @@
 :root {
   --bg: #f6f5f1; --card: #ffffff; --ink: #1d2320; --muted: #66706b; --line: #e3e1da;
   --accent: #1f6f5c; --accent-ink: #ffffff; --soft: #e6f1ed; --warn: #b5541c; --warn-soft: #fbeee5;
-  --good: #2e7d32;
+  --good: #2e7d32; --prop: #a8946f;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #121614; --card: #1b201e; --ink: #e8ece9; --muted: #9aa5a0; --line: #2c3330;
     --accent: #5cc3a5; --accent-ink: #0c1a15; --soft: #1e2e29; --warn: #f0a070; --warn-soft: #3a2a20;
-    --good: #7cc87f; color-scheme: dark;
+    --good: #7cc87f; --prop: #8f8064; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
     --bg: #121614; --card: #1b201e; --ink: #e8ece9; --muted: #9aa5a0; --line: #2c3330;
     --accent: #5cc3a5; --accent-ink: #0c1a15; --soft: #1e2e29; --warn: #f0a070; --warn-soft: #3a2a20;
-    --good: #7cc87f; color-scheme: dark;
+    --good: #7cc87f; --prop: #8f8064; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -111,7 +111,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 #flow .inner { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; text-align: center; }
 #flow h2 { margin: 0; font-size: 1.6rem; text-wrap: balance; }
 #flow .sk { color: var(--muted); font-size: .95rem; margin-top: -10px; }
-.breath { width: 130px; height: 130px; margin: 6px auto; border-radius: 50%; background: var(--soft); border: 3px solid var(--accent);
+.breath { width: 84px; height: 84px; font-size: .85rem; margin: 6px auto; border-radius: 50%; background: var(--soft); border: 3px solid var(--accent);
   display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em;
   transform: scale(.75); transition-property: transform; transition-timing-function: ease-in-out; }
 .breath.in { transform: scale(1); }
@@ -126,6 +126,19 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .tips ul, .tips ol { margin: 4px 0; padding-left: 20px; }
 .tips li { margin: 4px 0; }
 .lvl { font-weight: 600; }
+.figs { display: flex; gap: 8px; margin: 2px 0 8px; }
+.figs figure { margin: 0; flex: 1; min-width: 0; max-width: 170px; }
+.figs figcaption { text-align: center; font-size: .85rem; color: var(--muted); }
+.fig { width: 100%; height: auto; display: block; background: var(--card); border-radius: 10px; }
+.fig polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: var(--w); }
+.fig .bd { stroke: var(--ink); } .fig .far { stroke: var(--muted); opacity: .7; }
+.fig .hd { fill: var(--card); stroke: var(--ink); stroke-width: 2.4; }
+.fig .fl { stroke: var(--line); stroke-width: 1.5; } .fig .pr { fill: none; stroke: var(--prop); stroke-width: 2; }
+.fig .st { stroke: var(--prop); stroke-width: 1.2; } .fig .rg { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+.fig .wt { fill: var(--accent); } .fig .rp { fill: none; stroke: var(--accent); stroke-width: 1.2; }
+.posegrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0; }
+.posegrid .figs { margin: 0; } .posegrid figcaption { font-size: .8rem; line-height: 1.3; }
+#fFig .figs { justify-content: center; } #fFig figure { max-width: 200px; }
 .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 </style>
 </head>
@@ -139,6 +152,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 <div id="flow" hidden><div class="inner">
   <div class="spread small"><span id="fSet"></span><span id="fCount"></span></div>
   <div class="fbar"><i id="fBar"></i></div>
+  <div id="fFig"></div>
   <div class="breath" id="fBreath"></div>
   <h2 id="fName"></h2>
   <div class="sk" id="fSk"></div>
@@ -232,6 +246,13 @@ const EX = {
   }
 };
 
+EX.dips = {
+  name: "Ring dips", unit: "reps", why: "Chest and arms. Hard on shoulders, so build up slowly.",
+  cues: ["Rings low (about hip height) for the feet-assisted levels", "Turn the rings out a little at the top; arms locked", "Shoulders pushed down, away from your ears. No shrugging", "Go only as low as feels fine. Stop before any pinch at the front of the shoulder"],
+  levels: ["Support hold, feet on the floor", "Support hold, full weight", "Dips with feet helping, half way down", "Dips with feet helping, full depth", "Slow lowering only (5 seconds down)", "Full ring dips"],
+  units: ["secs", "secs", "reps", "reps", "reps", "reps"],
+  ranges: [[10, 30], [10, 30], [5, 10], [5, 10], [3, 6], [3, 8]]
+};
 EX.sunsal = {
   name: "Sun salutation", unit: "sets", single: true, why: "A full-body vinyasa flow. One set = 24 poses: 12 leading with the right leg, then 12 with the left. Move with your breath.",
   cues: ["Inhale as you open or lift, exhale as you fold or lower", "Keep shoulders down, away from your ears, in every pose", "Bend your knees in forward folds and downward dog as much as you like", "Knees-chest-chin and low cobra are the shoulder-friendly choices; use them until your shoulder is happy"],
@@ -259,14 +280,31 @@ function sunPoses(L) {
     let n = p.n, sk = p.sk, c = p.c;
     if (L <= 2 && p.mod) c = p.mod;
     if (L >= 5 && p.hard) ({ n, sk, c } = p.hard);
-    out.push({ n, sk, b: p.b, c: c.replace("{lead}", lead), lead });
+    out.push({ n, sk, b: p.b, c: c.replace("{lead}", lead), lead, fig: n === "Plank" && L <= 2 ? "plankKnee" : POSE_FIG[n] });
   }));
   return out;
 }
 
+const EX_FIGS = {
+  ringrow: { 0: ["rowStart", "rowEnd"] }, squat: { 0: ["sqStart", "sqEnd"] },
+  pushup: { 0: ["incStart", "incEnd"], 3: ["puStart", "puEnd"] }, bridge: { 0: ["brStart", "brEnd"] },
+  deadbug: { 0: ["dbStart", "dbEnd"] }, row1: { 0: ["r1Start", "r1End"] }, hinge: { 0: ["hgStart", "hgEnd"] },
+  facepull: { 0: ["fpStart", "fpEnd"] }, split: { 0: ["spStart", "spEnd"] }, yt: { 0: ["ytStart", "ytEnd"] },
+  sideplank: { 0: ["skKnee"], 1: ["skFeet"] }, rope: { 0: ["jrDown", "jrUp"] },
+  dips: { 0: ["dpFeet"], 1: ["dpTop"], 2: ["dpFeet", "dpAssistBot"], 4: ["dpTop", "dpBot"] }
+};
+function exFigs(id, L) {
+  const m = EX_FIGS[id]; if (!m) return "";
+  const key = Math.max(...Object.keys(m).map(Number).filter(k => k <= L));
+  const names = m[key];
+  const labels = id === "rope" ? ["Rope under feet", "Jump"] : names.length === 1 ? ["Hold"] : ["Start", "Finish"];
+  return figRow(names, labels);
+}
+const POSE_FIG = { "Prayer pose": "prayer", "Raised arms": "raised", "Standing forward fold": "fold", "Low lunge": "lunge", "Plank": "plank", "Knees, chest, chin": "eight", "Chaturanga": "chaturanga", "Cobra": "cobra", "Upward dog": "updog", "Downward dog": "dog" };
+
 const WORKOUTS = {
   A: { name: "Workout A", focus: "Rows, squats, push-ups, core", list: ["ringrow", "squat", "pushup", "bridge", "deadbug", "rope"] },
-  B: { name: "Workout B", focus: "Back, hips, shoulder health, core", list: ["row1", "hinge", "facepull", "split", "yt", "sideplank", "rope"] },
+  B: { name: "Workout B", focus: "Back, hips, shoulder health, core", list: ["row1", "dips", "hinge", "facepull", "split", "yt", "sideplank", "rope"] },
   C: { name: "Flow day", short: "Flow", focus: "Sun salutations. Gentle enough for rest days", list: ["sunsal"], mins: "~10–20 min" }
 };
 WORKOUTS.A.short = "A"; WORKOUTS.B.short = "B";
@@ -297,6 +335,116 @@ const DESK = [
   ["Back bend in chair", "5×", "Hands behind head. Lean back over the top of the chair."],
   ["Stand and reach", "5 breaths", "Stand up, arms overhead, reach tall."]
 ];
+
+// ---------- Figure drawings ----------
+// Each pose is a side-view figure facing right. Angles are in degrees: 0 = right, 90 = down, -90 = up.
+// t = torso (hip to neck), la/lb = near/far leg [thigh, shin], aa/ab = near/far arm [upper, forearm].
+// props: "rings", "weight", "chair", "box", "rope", "ropeUp". hang: no floor drawn.
+const FIG_LEN = { t: 30, th: 22, sh: 21, ua: 16, fa: 15 };
+const STAND = { t: -90, la: [90, 90], lb: [90, 90], aa: [95, 90], ab: [85, 90] };
+const P = (o) => ({ ...STAND, ...o });
+const POSES = {
+  stand: P({}),
+  // Ring row: lean back, pull rings to ribs
+  rowStart: P({ t: -122, la: [58, 58], lb: [58, 58], aa: [-48, -48], ab: [-48, -48], props: ["rings"] }),
+  rowEnd: P({ t: -122, la: [58, 58], lb: [58, 58], aa: [150, -15], ab: [150, -15], props: ["rings"] }),
+  // Squat with weight at chest
+  sqStart: P({ aa: [75, -80], ab: [75, -80], props: ["weight", "chair"] }),
+  sqEnd: P({ t: -68, la: [12, 108], lb: [12, 108], aa: [95, -55], ab: [95, -55], props: ["weight", "chair"] }),
+  // Push-ups
+  incStart: P({ t: -45, la: [135, 135], lb: [135, 135], aa: [70, 70], ab: [70, 70], props: ["box"] }),
+  incEnd: P({ t: -40, la: [140, 140], lb: [140, 140], aa: [165, 75], ab: [165, 75], props: ["box"] }),
+  puStart: P({ t: -24, la: [156, 156], lb: [156, 156], aa: [90, 90], ab: [90, 90] }),
+  puEnd: P({ t: -8, la: [172, 172], lb: [172, 172], aa: [160, 70], ab: [160, 70] }),
+  // Glute bridge
+  brStart: P({ t: 180, la: [-50, 75], lb: [-50, 75], aa: [5, 5], ab: [5, 5], hd: 180 }),
+  brEnd: P({ t: 162, la: [-18, 92], lb: [-18, 92], aa: [15, 0], ab: [15, 0], hd: 175 }),
+  // Dead bug
+  dbStart: P({ t: 180, la: [-90, 0], lb: [-90, 0], aa: [-90, -90], ab: [-90, -90], hd: 180 }),
+  dbEnd: P({ t: 180, la: [-90, 0], lb: [-12, -6], aa: [188, 188], ab: [-90, -90], hd: 180 }),
+  // One-arm row, hand and knee on a chair
+  r1Start: P({ t: -8, la: [92, 90], lb: [90, 180], aa: [90, 90], ab: [90, 90], props: ["weight", "bench"] }),
+  r1End: P({ t: -8, la: [92, 90], lb: [90, 180], aa: [170, 80], ab: [90, 90], props: ["weight", "bench"] }),
+  // Hip hinge
+  hgStart: P({ aa: [90, 90], ab: [90, 90], props: ["weight"] }),
+  hgEnd: P({ t: -22, la: [100, 82], lb: [100, 82], aa: [92, 92], ab: [92, 92], props: ["weight"] }),
+  // Face pull
+  fpStart: P({ t: -104, la: [76, 76], lb: [76, 76], aa: [-12, -12], ab: [-12, -12], props: ["rings"] }),
+  fpEnd: P({ t: -104, la: [76, 76], lb: [76, 76], aa: [195, -55], ab: [195, -55], props: ["rings"] }),
+  // Split squat
+  spStart: P({ la: [72, 100], lb: [108, 80] }),
+  spEnd: P({ t: -88, la: [4, 92], lb: [102, 165] }),
+  // Prone Y raise
+  ytStart: P({ t: 0, la: [180, 180], lb: [180, 180], aa: [4, 2], ab: [4, 2], hd: 0 }),
+  ytEnd: P({ t: -4, la: [180, 180], lb: [180, 180], aa: [-28, -28], ab: [-28, -28], hd: -12 }),
+  // Side plank (knees, then feet)
+  skKnee: P({ t: -24, la: [150, 200], lb: [150, 200], aa: [-90, -90], ab: [90, 0] }),
+  skFeet: P({ t: -13, la: [167, 167], lb: [169, 169], aa: [-90, -90], ab: [90, 0] }),
+  // Jump rope
+  jrDown: P({ aa: [100, 30], ab: [80, 30], props: ["rope"] }),
+  jrUp: P({ la: [95, 85], lb: [85, 95], aa: [100, 30], ab: [80, 30], props: ["ropeUp"], lift: 7 }),
+  // Ring dips
+  dpFeet: P({ t: -88, la: [45, 100], lb: [45, 100], aa: [80, 84], ab: [80, 84], props: ["rings"] }),
+  dpTop: P({ t: -84, la: [100, 115], lb: [100, 115], aa: [90, 90], ab: [90, 90], props: ["rings"], hang: true }),
+  dpBot: P({ t: -72, la: [100, 115], lb: [100, 115], aa: [195, 62], ab: [195, 62], props: ["rings"], hang: true }),
+  dpAssistBot: P({ t: -78, la: [20, 100], lb: [20, 100], aa: [195, 62], ab: [195, 62], props: ["rings"] }),
+  // Sun salutation poses
+  prayer: P({ aa: [100, -20], ab: [80, -160] }),
+  raised: P({ t: -96, aa: [-108, -112], ab: [-104, -108], hd: -100 }),
+  fold: P({ t: 45, la: [90, 90], lb: [90, 90], aa: [120, 150], ab: [116, 146], hd: 60 }),
+  lunge: P({ t: -76, la: [8, 95], lb: [145, 178], aa: [80, 90], ab: [84, 90] }),
+  plank: P({ t: -24, la: [156, 156], lb: [156, 156], aa: [90, 90], ab: [90, 90] }),
+  plankKnee: P({ t: -30, la: [165, 200], lb: [165, 200], aa: [90, 90], ab: [90, 90] }),
+  eight: P({ t: 42, la: [100, 180], lb: [100, 180], aa: [-150, 100], ab: [-150, 100], hd: -5 }),
+  chaturanga: P({ t: -6, la: [174, 174], lb: [174, 174], aa: [160, 70], ab: [160, 70] }),
+  cobra: P({ t: -28, la: [180, 180], lb: [180, 180], aa: [110, 30], ab: [110, 30], hd: -45 }),
+  updog: P({ t: -42, la: [175, 180], lb: [175, 180], aa: [95, 90], ab: [95, 90], hd: -60 }),
+  dog: P({ t: 48, la: [128, 128], lb: [128, 128], aa: [48, 48], ab: [48, 48], hd: 60 }),
+  lungeL: P({ t: -76, la: [145, 178], lb: [8, 95], aa: [80, 90], ab: [84, 90] })
+};
+
+function figJoints(p) {
+  const d = a => [Math.cos(a * Math.PI / 180), Math.sin(a * Math.PI / 180)];
+  const add = (o, a, l) => { const v = d(a); return [o[0] + v[0] * l, o[1] + v[1] * l]; };
+  const L = FIG_LEN, hip = [0, 0], neck = add(hip, p.t, L.t), head = add(neck, p.hd ?? p.t, 10);
+  const ka = add(hip, p.la[0], L.th), fa = add(ka, p.la[1], L.sh), kb = add(hip, p.lb[0], L.th), fb = add(kb, p.lb[1], L.sh);
+  const ea = add(neck, p.aa[0], L.ua), wa = add(ea, p.aa[1], L.fa), eb = add(neck, p.ab[0], L.ua), wb = add(eb, p.ab[1], L.fa);
+  return { hip, neck, head, ka, fa, kb, fb, ea, wa, eb, wb };
+}
+function figBox(j) {
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  Object.entries(j).forEach(([k, [x, y]]) => { const r = k === "head" ? 6 : 0; x0 = Math.min(x0, x - r); x1 = Math.max(x1, x + r); y0 = Math.min(y0, y - r); y1 = Math.max(y1, y + r); });
+  return { x0, x1, y0, y1, w: x1 - x0, h: y1 - y0 };
+}
+// Draw a row of poses at one shared scale. Returns SVG markup.
+function figRow(names, labels) {
+  const list = names.map(n => ({ p: POSES[n], j: figJoints(POSES[n]) }));
+  const s = Math.min(1, ...list.map(o => { const b = figBox(o.j); return Math.min(84 / b.w, 80 / b.h); }));
+  return `<div class="figs">${list.map((o, i) => figSVG(o, s, labels && labels[i])).join("")}</div>`;
+}
+function figSVG({ p, j }, s, label) {
+  const b = figBox(j), props = p.props || [];
+  const tx = 50 - s * (b.x0 + b.x1) / 2, ty = (p.hang ? 88 : 92) - s * b.y1 - (p.lift || 0);
+  const T = ([x, y]) => [+(tx + s * x).toFixed(1), +(ty + s * y).toFixed(1)];
+  const J = {}; Object.keys(j).forEach(k => J[k] = T(j[k]));
+  const line = (pts, cls) => `<polyline class="${cls}" points="${pts.map(k => J[k].join(",")).join(" ")}"/>`;
+  let back = "", front = "";
+  const floorY = 92;
+  if (!p.hang) back += `<line class="fl" x1="4" y1="${floorY + 1.5}" x2="96" y2="${floorY + 1.5}"/>`;
+  if (props.includes("chair")) { const [x, y] = J.hip; const sx = x - 14, seat = floorY - 20; back += `<path class="pr" d="M${sx} ${seat} h14 M${sx + 2} ${seat} v20 M${sx + 12} ${seat} v20 M${sx + 2} ${seat} v-18"/>`; }
+  if (props.includes("box")) { const [x, y] = J.wa; back += `<rect class="pr" x="${x - 12}" y="${y}" width="24" height="${floorY - y + 1.5}" rx="1.5"/>`; }
+  if (props.includes("bench")) { const [x, y] = J.kb; const [hx] = J.wb; const x0 = Math.min(x, hx) - 6, x1 = Math.max(x, hx) + 6; back += `<path class="pr" d="M${x0} ${y + 2} H${x1} M${x0 + 3} ${y + 2} V${floorY + 1.5} M${x1 - 3} ${y + 2} V${floorY + 1.5}"/>`; }
+  if (props.includes("rings")) ["wa", "wb"].forEach(k => { const [x, y] = J[k]; back += `<line class="st" x1="${x}" y1="0" x2="${x}" y2="${y - 3}"/><circle class="rg" cx="${x}" cy="${y}" r="3"/>`; });
+  if (props.includes("rope")) { const [x1, y1] = J.wa, [x2, y2] = J.wb; back += `<path class="rp" d="M${x1} ${y1} C${x1 + 18} ${floorY + 10}, ${x2 - 18} ${floorY + 10}, ${x2} ${y2}"/>`; }
+  if (props.includes("ropeUp")) { const [x1, y1] = J.wa, [x2, y2] = J.wb; back += `<path class="rp" d="M${x1} ${y1} C${x1 + 22} -14, ${x2 - 22} -14, ${x2} ${y2}"/>`; }
+  const w = 3.6 * Math.max(s, .7);
+  // far limbs, body, near limbs
+  const far = line(["hip", "kb", "fb"], "far") + line(["neck", "eb", "wb"], "far");
+  const body = line(["hip", "neck"], "bd") + `<circle class="hd" cx="${J.head[0]}" cy="${J.head[1]}" r="${(6 * s).toFixed(1)}"/>`;
+  const near = line(["hip", "ka", "fa"], "bd") + line(["neck", "ea", "wa"], "bd");
+  if (props.includes("weight")) front += `<rect class="wt" x="${J.wa[0] - 3.5}" y="${J.wa[1] - 3.5}" width="7" height="7" rx="1.5"/>`;
+  return `<figure><svg viewBox="0 0 100 100" class="fig" role="img" aria-label="${label || "position"}" style="--w:${w.toFixed(2)}">${back}${far}${body}${near}${front}</svg>${label ? `<figcaption>${label}</figcaption>` : ""}</figure>`;
+}
 
 // ---------- Storage ----------
 const KEY = "steady-strength-v1";
@@ -377,7 +525,7 @@ function setsFor(id) {
 function targetRange(id) {
   const e = EX[id];
   if (e.targets) { const t = e.targets[lvl(id)]; return [t, t]; }
-  return e.range;
+  return e.ranges ? e.ranges[lvl(id)] : e.range;
 }
 function unitLabel(id) {
   const e = EX[id];
@@ -410,6 +558,8 @@ function freshDraft(type) {
 }
 function getDraft() {
   if (!S.draft || S.draft.date !== todayStr()) { S.draft = freshDraft(nextType()); save(); }
+  const fresh = freshDraft(S.draft.type);
+  Object.keys(fresh.entries).forEach(id => { if (!S.draft.entries[id]) S.draft.entries[id] = fresh.entries[id]; });
   return S.draft;
 }
 
@@ -479,18 +629,19 @@ function checklistCard(title, items, key, d) {
 
 function exerciseCard(id, d) {
   const e = EX[id], en = d.entries[id], L = en.level;
-  const [lo, hi] = e.targets ? [e.targets[L], e.targets[L]] : e.range;
+  const [lo, hi] = e.targets ? [e.targets[L], e.targets[L]] : e.ranges ? e.ranges[L] : e.range;
+  const unit = e.units ? e.units[L] : e.unit;
   const prev = lastEntry(id);
   const up = readyToLevelUp(id) && L === lvl(id);
   const side = e.perSide ? " each side" : "";
-  const target = e.single ? (e.unit === "sets" ? `${lo} sets` : `${lo} rounds`) : `${en.sets.length} × ${lo === hi ? lo : lo + "–" + hi} ${e.unit === "secs" ? "sec" : "reps"}${side}`;
+  const target = e.single ? (e.unit === "sets" ? `${lo} sets` : `${lo} rounds`) : `${en.sets.length} × ${lo === hi ? lo : lo + "–" + hi} ${unit === "secs" ? "sec" : "reps"}${side}`;
   const rows = en.sets.map((s, i) => `
     <span class="small muted">${e.single ? "Done" : "Set " + (i + 1)}</span>
-    <input type="number" inputmode="numeric" min="0" placeholder="${e.single ? e.unit : prev && prev.en.sets[i] ? prev.en.sets[i].reps : e.unit}" data-ex="${id}" data-i="${i}" data-f="reps" value="${esc(s.reps)}" aria-label="${e.name} set ${i + 1}">
+    <input type="number" inputmode="numeric" min="0" placeholder="${e.single ? e.unit : prev && prev.en.level === L && prev.en.sets[i] ? prev.en.sets[i].reps : unit}" data-ex="${id}" data-i="${i}" data-f="reps" value="${esc(s.reps)}" aria-label="${e.name} set ${i + 1}">
     ${e.weight ? `<input type="number" inputmode="decimal" min="0" placeholder="lb" data-ex="${id}" data-i="${i}" data-f="weight" value="${esc(s.weight)}" aria-label="${e.name} set ${i + 1} weight">` : ""}
   `).join("");
-  const tipHtml = `<ul>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
-      ${id === "sunsal" ? `<b>The 12 poses</b>, then repeat on the other leg:<ol>${sunPoses(L).slice(0, 12).map(p => `<li>${esc(p.n)} <span class="muted">· ${p.b}</span></li>`).join("")}</ol>` : ""}
+  const tipHtml = `${exFigs(id, L)}<ul>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+      ${id === "sunsal" ? `<b>The 12 poses</b>, then repeat on the other leg:<div class="posegrid">${sunPoses(L).slice(0, 12).map((p, i) => figRow([p.fig], [(i + 1) + ". " + esc(p.n)])).join("")}</div>` : ""}
       ${prev ? `<div class="muted">Last time (${fmtDate(prev.s.date)}): ${prev.en.sets.map(x => (x.reps || "–") + (x.weight ? " @ " + x.weight + " lb" : "")).join(", ")}</div>` : ""}
       ${e.single ? "" : `<div class="row" style="margin-top:8px"><button class="btn tiny" data-addset="${id}">Add a set</button>${en.sets.length > 1 ? `<button class="btn tiny" data-rmset="${id}">Remove a set</button>` : ""}</div>`}`;
   return `<div class="card">
@@ -614,7 +765,8 @@ function viewPlan() {
       <ul class="small">
         <li>More pulling than pushing (rows, face pulls, Y-T raises) to balance desk posture.</li>
         <li>In sun salutations, use knees-chest-chin and low cobra before chaturanga and upward dog.</li>
-        <li>No ring dips, ring push-ups, ring support holds, or overhead pressing for now. Those can come after 2–3 months of pain-free training.</li>
+        <li>Ring dips start as a support hold with your feet on the floor. Only move up after sessions with shoulder pain at 2 or less.</li>
+        <li>No ring push-ups or overhead pressing for now.</li>
         <li>Shoulders stay down and away from your ears in every exercise. If you feel your neck working, make it easier.</li>
         <li>Muscle burn is fine. Sharp, pinching or lingering pain is not; stop that exercise and drop a level next time.</li>
       </ul>
@@ -730,6 +882,7 @@ function flowShow() {
   $("#fSet").textContent = "Set " + (flowSetsDone() + 1) + " of " + target;
   $("#fCount").textContent = "Pose " + (F.i + 1) + " / 24 · leading " + p.lead;
   $("#fBar").style.width = ((F.i + 1) / 24 * 100) + "%";
+  $("#fFig").innerHTML = figRow([p.fig]);
   $("#fName").textContent = p.n; $("#fSk").textContent = p.sk; $("#fCue").textContent = p.c;
   const br = $("#fBreath"); br.textContent = p.b; br.style.transitionDuration = F.pace + "s";
   br.classList.toggle("in", p.b === "inhale" || (p.b === "hold" && F.i > 0 && F.poses[F.i - 1].b === "inhale"));

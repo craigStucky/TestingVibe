@@ -19,6 +19,7 @@ To use it on your phone from anywhere, turn on GitHub Pages for this repo (Setti
 | Workout A | Workout B |
 |---|---|
 | Ring row | One-arm row (weight) |
+| | Ring dips (starts as a support hold) |
 | Squat (goblet with weight) | Hip hinge / Romanian deadlift (weight) |
 | Push-up (starts at the wall) | Ring face pull |
 | Glute bridge | Split squat |
@@ -33,7 +34,7 @@ Every exercise has levels, from very easy to harder. Start at level 1. When you 
 ### Shoulder-friendly choices
 
 - More pulling than pushing, to balance desk posture.
-- No ring dips, ring push-ups, ring support holds or overhead pressing for the first 2–3 months.
+- Ring dips (Workout B) start as a support hold with feet on the floor, then feet-assisted dips, and only later full dips. No ring push-ups or overhead pressing for now.
 - Shoulders stay down, away from the ears. Muscle burn is fine; sharp or pinching pain means stop and drop a level.
 
 This is general fitness guidance, not medical advice. If shoulder cramps are frequent, severe, or come with numbness or tingling, get them checked by a doctor or physiotherapist.
